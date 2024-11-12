@@ -1,0 +1,6 @@
+@CryptographyTestLinuxServer_HostAddress = http://localhost:5143
+
+GET {{CryptographyTestLinuxServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35424.110 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography", "SpawnDev.BlazorJS.Cryptography\SpawnDev.BlazorJS.Cryptography.csproj", "{8EB351FD-4658-4859-934E-5557CC840454}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.Demo", "SpawnDev.BlazorJS.Cryptography.Demo\SpawnDev.BlazorJS.Cryptography.Demo\SpawnDev.BlazorJS.Cryptography.Demo.csproj", "{30B87D8A-B726-4AF6-B182-598FD802A52C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.Demo.Client", "SpawnDev.BlazorJS.Cryptography.Demo\SpawnDev.BlazorJS.Cryptography.Demo.Client\SpawnDev.BlazorJS.Cryptography.Demo.Client.csproj", "{0280B64E-241A-42B0-B5CF-56D3768D2C86}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.DemoLinux", "SpawnDev.BlazorJS.Cryptography.DemoLinux\SpawnDev.BlazorJS.Cryptography.DemoLinux\SpawnDev.BlazorJS.Cryptography.DemoLinux.csproj", "{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.DemoLinux.Client", "SpawnDev.BlazorJS.Cryptography.DemoLinux\SpawnDev.BlazorJS.Cryptography.DemoLinux.Client\SpawnDev.BlazorJS.Cryptography.DemoLinux.Client.csproj", "{2099FE7A-79CE-4D24-95A1-1A7934B00054}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8EB351FD-4658-4859-934E-5557CC840454}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EB351FD-4658-4859-934E-5557CC840454}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EB351FD-4658-4859-934E-5557CC840454}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EB351FD-4658-4859-934E-5557CC840454}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30B87D8A-B726-4AF6-B182-598FD802A52C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30B87D8A-B726-4AF6-B182-598FD802A52C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30B87D8A-B726-4AF6-B182-598FD802A52C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30B87D8A-B726-4AF6-B182-598FD802A52C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0280B64E-241A-42B0-B5CF-56D3768D2C86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0280B64E-241A-42B0-B5CF-56D3768D2C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0280B64E-241A-42B0-B5CF-56D3768D2C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0280B64E-241A-42B0-B5CF-56D3768D2C86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
