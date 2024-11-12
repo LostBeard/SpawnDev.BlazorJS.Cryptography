@@ -6,6 +6,8 @@ A cross platform cryptography library that supports encryption with AES-GCM, sha
 
 This project aims to simplify common cryptography tasks with an API that is consistent on .Net Web API servers and in the web browser with Blazor WebAssembly.
 
+[PortableCrypto](#PortableCrypto) and the related classes wrap underlying cryptographic classes that are chosen based on the current platform. On Window and Linux, classes such as AesGcm, ECDiffieHellman, ECDsa, and SHA from Microsoft's System.Security.Cryptography library are used. When running under Blazor WebAssembly on the browser the browser Crypto API is used via Javascript interop with SpawnDev.BlazorJS. By wrapping these underlying libraries we can provide a consistent and reliable API regardless of the executing platform.
+
 ### Getting started
 
 #### Blazor WebAssembly
