@@ -10,18 +10,8 @@ This project aims to simplify common cryptography tasks with an API that is cons
 
 ### Getting started
 
-#### Blazor WebAssembly
 Example Program.cs 
 ```cs
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using SpawnDev.BlazorJS;
-using SpawnDev.BlazorJS.Cryptography;
-
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
-builder.RootComponents.Add<App>("#app");
-builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();
@@ -29,8 +19,6 @@ builder.Services.AddBlazorJSRuntime();
 // Add PortableCrypto service
 builder.Services.AddSingleton<PortableCrypto>();
 
-// build and start the app
-await builder.Build().BlazorJSRunAsync();
 ```
 
 Inject
