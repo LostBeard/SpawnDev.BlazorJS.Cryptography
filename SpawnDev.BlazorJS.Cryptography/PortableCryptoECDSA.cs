@@ -6,6 +6,29 @@ namespace SpawnDev.BlazorJS.Cryptography
     public partial class PortableCrypto
     {
         /// <summary>
+        /// Generate a new ECDSA key
+        /// </summary>
+        /// <param name="namedCurve"></param>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<PortableECDSAKey> GenerateECDSAKey(string namedCurve = NamedCurve.P521, bool extractable = true)
+        {
+            if (OperatingSystem.IsBrowser())
+            {
+                var keyUsages = new string[] { "sign", "verify" };
+                var key = await SubtleCrypto!.GenerateKey<CryptoKeyPair>(new EcKeyGenParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
+                return new PortableECDSAKeyJS(key);
+            }
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsWindows())
+            {
+                var eccurve = NamedCurveToECCurve(namedCurve);
+                var key = ECDsa.Create(eccurve);
+                return new PortableECDSAKeyNet(key);
+            }
+            throw new NotImplementedException();
+        }
+        /// <summary>
         /// Exports the public key in Spki format
         /// </summary>
         /// <param name="key"></param>
@@ -42,6 +65,66 @@ namespace SpawnDev.BlazorJS.Cryptography
             else if (key is PortableECDSAKeyNet keyNet)
             {
                 return keyNet.Key.ExportPkcs8PrivateKey();
+            }
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Import an ECDSA public key
+        /// </summary>
+        /// <param name="publicKeySpkiData"></param>
+        /// <param name="namedCurve"></param>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, string namedCurve = NamedCurve.P521, bool extractable = true)
+        {
+            if (OperatingSystem.IsBrowser())
+            {
+                var keyUsages = new string[] { };
+                var publicKey = await SubtleCrypto!.ImportKey<CryptoKey>("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
+                var key = new CryptoKeyPair
+                {
+                    PublicKey = publicKey,
+                };
+                return new PortableECDSAKeyJS(key);
+            }
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsWindows())
+            {
+                var key = ECDsa.Create();
+                key.ImportSubjectPublicKeyInfo(publicKeySpkiData, out _);
+                return new PortableECDSAKeyNet(key);
+            }
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Import an ECDSA public and private key
+        /// </summary>
+        /// <param name="publicKeySpkiData"></param>
+        /// <param name="privateKeyPkcs8Data"></param>
+        /// <param name="namedCurve"></param>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, byte[] privateKeyPkcs8Data, string namedCurve = NamedCurve.P521, bool extractable = true)
+        {
+            if (OperatingSystem.IsBrowser())
+            {
+                var keyUsages = new string[] { "deriveBits", "deriveKey" };
+                var privateKey = await SubtleCrypto!.ImportKey<CryptoKey>("pkcs8", privateKeyPkcs8Data, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
+                var publicKey = await SubtleCrypto!.ImportKey<CryptoKey>("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, new string[] { });
+                var key = new CryptoKeyPair
+                {
+                    PublicKey = publicKey,
+                    PrivateKey = privateKey,
+                };
+                return new PortableECDSAKeyJS(key);
+            }
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsWindows())
+            {
+                var key = ECDsa.Create();
+                key.ImportSubjectPublicKeyInfo(publicKeySpkiData, out _);
+                key.ImportPkcs8PrivateKey(privateKeyPkcs8Data, out _);
+                return new PortableECDSAKeyNet(key);
             }
             throw new NotImplementedException();
         }
@@ -97,92 +180,6 @@ namespace SpawnDev.BlazorJS.Cryptography
                 var keyNet = key as PortableECDSAKeyNet;
                 var signature = keyNet!.Key.SignData(data, hashAlgorithm);
                 return signature;
-            }
-            throw new NotImplementedException();
-        }
-        /// <summary>
-        /// Generate a new ECDSA key
-        /// </summary>
-        /// <param name="namedCurve"></param>
-        /// <param name="extractable"></param>
-        /// <param name="keyUsages"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task<PortableECDSAKey> GenerateECDSAKey(string namedCurve = NamedCurve.P521, bool extractable = true, IEnumerable<string>? keyUsages = null)
-        {
-            if (OperatingSystem.IsBrowser())
-            {
-                keyUsages ??= new string[] { "sign", "verify" };
-                var key = await SubtleCrypto!.GenerateKey<CryptoKeyPair>(new EcKeyGenParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
-                return new PortableECDSAKeyJS(key);
-            }
-            if (OperatingSystem.IsLinux() || OperatingSystem.IsWindows())
-            {
-                var eccurve = NamedCurveToECCurve(namedCurve);
-                var key = ECDsa.Create(eccurve);
-                return new PortableECDSAKeyNet(key);
-            }
-            throw new NotImplementedException();
-        }
-        /// <summary>
-        /// Import an ECDSA public key
-        /// </summary>
-        /// <param name="publicKeySpkiData"></param>
-        /// <param name="namedCurve"></param>
-        /// <param name="extractable"></param>
-        /// <param name="keyUsages"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, string namedCurve = NamedCurve.P521, bool extractable = true, IEnumerable<string>? keyUsages = null)
-        {
-            if (OperatingSystem.IsBrowser())
-            {
-                keyUsages ??= new string[] { };
-                var publicKey = await SubtleCrypto!.ImportKey<CryptoKey>("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
-                var key = new CryptoKeyPair
-                {
-                    PublicKey = publicKey,
-                };
-                return new PortableECDSAKeyJS(key);
-            }
-            if (OperatingSystem.IsLinux() || OperatingSystem.IsWindows())
-            {
-                var key = ECDsa.Create();
-                key.ImportSubjectPublicKeyInfo(publicKeySpkiData, out _);
-                return new PortableECDSAKeyNet(key);
-            }
-            throw new NotImplementedException();
-        }
-        /// <summary>
-        /// Import an ECDSA public and private key
-        /// </summary>
-        /// <param name="publicKeySpkiData"></param>
-        /// <param name="privateKeyPkcs8Data"></param>
-        /// <param name="namedCurve"></param>
-        /// <param name="extractable"></param>
-        /// <param name="keyUsages"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, byte[] privateKeyPkcs8Data, string namedCurve = NamedCurve.P521, bool extractable = true, IEnumerable<string>? keyUsages = null)
-        {
-            if (OperatingSystem.IsBrowser())
-            {
-                keyUsages ??= new string[] { "deriveBits", "deriveKey" };
-                var privateKey = await SubtleCrypto!.ImportKey<CryptoKey>("pkcs8", privateKeyPkcs8Data, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
-                var publicKey = await SubtleCrypto!.ImportKey<CryptoKey>("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, new string[] { });
-                var key = new CryptoKeyPair
-                {
-                    PublicKey = publicKey,
-                    PrivateKey = privateKey,
-                };
-                return new PortableECDSAKeyJS(key);
-            }
-            if (OperatingSystem.IsLinux() || OperatingSystem.IsWindows())
-            {
-                var key = ECDsa.Create();
-                key.ImportSubjectPublicKeyInfo(publicKeySpkiData, out _);
-                key.ImportPkcs8PrivateKey(privateKeyPkcs8Data, out _);
-                return new PortableECDSAKeyNet(key);
             }
             throw new NotImplementedException();
         }

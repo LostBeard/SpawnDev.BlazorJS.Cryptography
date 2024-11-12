@@ -32,7 +32,6 @@ namespace SpawnDev.BlazorJS.Cryptography
             secret = secret[..keySizeBytes];
             return GenerateAESGCMKey(secret, salt, iterations, hashName, keySizeBytes, tagSizeBytes, nonceSizeBytes, extractable);
         }
-        object y = HashAlgorithmName.SHA512;
         /// <summary>
         /// Generate an AES-GCM key using a secret byte array and a salt
         /// </summary>
