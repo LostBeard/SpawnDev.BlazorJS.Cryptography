@@ -10,7 +10,12 @@ This project aims to simplify common cryptography tasks with an API that is cons
 
 ### Getting started
 
-Example Program.cs 
+Add the Nuget package
+```nuget
+dotnet add package SpawnDev.BlazorJS.Cryptography
+```
+
+Add PortableCrypto service and SpawnDev.BlazorJS dependency to Program.cs 
 ```cs
 
 // Add BlazorJSRuntime service
@@ -21,7 +26,7 @@ builder.Services.AddSingleton<PortableCrypto>();
 
 ```
 
-Inject
+Inject PortableCrypto
 ```cs
 [Inject] PortableCrypto PortableCrypto { get; set; }
 ```
