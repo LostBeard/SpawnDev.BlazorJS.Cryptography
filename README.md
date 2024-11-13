@@ -34,7 +34,7 @@ builder.Services.AddBlazorJSRuntime();
 builder.Services.AddSingleton<PortableCrypto>();
 ```
 
-Inject PortableCrypto
+Inject PortableCrypto service
 ```cs
 [Inject] PortableCrypto PortableCrypto { get; set; }
 ```
