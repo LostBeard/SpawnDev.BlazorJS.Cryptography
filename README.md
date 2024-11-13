@@ -1,6 +1,6 @@
 # SpawnDev.BlazorJS.Cryptography
 
-[![NuGet](https://badge.fury.io/nu/SpawnDev.BlazorJS.Cryptography.svg?label=SpawnDev.BlazorJS.Cryptography)](https://www.nuget.org/packages/SpawnDev.BlazorJS.Cryptography)
+[![NuGet](https://badge.fury.io/nu/SpawnDev.BlazorJS.Cryptography.svg?delta=9&label=SpawnDev.BlazorJS.Cryptography)](https://www.nuget.org/packages/SpawnDev.BlazorJS.Cryptography)
 
 A cross platform cryptography library that supports encryption with AES-GCM, shared secret generation with ECDH, data signatures with ECDSA, and hashing with SHA on Windows, Linux, and Browser (Blazor WebAssembly) platforms.
 
