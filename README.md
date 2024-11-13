@@ -1,12 +1,24 @@
 # SpawnDev.BlazorJS.Cryptography
 
-[![NuGet version](https://badge.fury.io/nu/SpawnDev.BlazorJS.Cryptography.svg?label=SpawnDev.BlazorJS.Cryptography)](https://www.nuget.org/packages/SpawnDev.BlazorJS.Cryptography)
+[![NuGet](https://badge.fury.io/nu/SpawnDev.BlazorJS.Cryptography.svg?delta=9&label=SpawnDev.BlazorJS.Cryptography)](https://www.nuget.org/packages/SpawnDev.BlazorJS.Cryptography)
 
-A cross platform cryptography library that supports encryption with AES-GCM, shared secret generation with ECDH, data signatures with ECDSA, and hashing with SHA on Windows, Linux, and Browser (Blazor WebAssembly) platforms.
+A .Net cryptography library designed to run in .Net anywhere for compatibility between Blazor WebAssembly in the browser and Web API's running on .Net. 
 
-This project aims to simplify common cryptography tasks with an API that is consistent on .Net Web API servers and in the web browser with Blazor WebAssembly.
+### The problem this library solves
+- Microsoft's System.Security.Cryptography library does not work in Blazor WebAssembly. This library uses the browser's built in cryptography libraries [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) when running on the browser and Microsoft's System.Security.Cryptography libraries when running on Windows and Linux.
 
-[PortableCrypto](#PortableCrypto) and the related classes wrap underlying cryptographic classes that are chosen based on the current platform. On Window and Linux, classes such as AesGcm, ECDiffieHellman, ECDsa, and SHA from Microsoft's System.Security.Cryptography library are used. When running under Blazor WebAssembly on the browser the browser [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) APIs are used. By wrapping these underlying libraries we can provide a consistent and reliable API regardless of the executing platform.
+### Features
+- AES-GCM - encryption and decryption
+- ECDH - shared secret generation
+- ECDSA - data signing and verification
+- SHA - data hashing
+
+### Supported Platforms
+- Browser (Blazor WebAssembly) - uses SubtleCrypto
+- Windows - uses System.Security.Cryptography
+- Linux - uses System.Security.Cryptography
+
+
 
 ### Getting started
 
@@ -17,13 +29,11 @@ dotnet add package SpawnDev.BlazorJS.Cryptography
 
 Add PortableCrypto service and SpawnDev.BlazorJS dependency to Program.cs 
 ```cs
-
 // Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();
 
 // Add PortableCrypto service
 builder.Services.AddSingleton<PortableCrypto>();
-
 ```
 
 Inject PortableCrypto
@@ -34,12 +44,12 @@ Inject PortableCrypto
 ## PortableCrypto
 - The PortableCrypto service provides an API that can be used on the server and on the browser to provide cross platform compatible cryptographic methods.
 
-### PortableCrypto - SHA
+### SHA
 
 #### `Task<byte[]> Digest(string hashName, byte[] data)`
 - Hash the specified data using the specified hash algorithm
 
-### PortableCrypto - ECDH
+### ECDH
 
 #### `Task<PortableECDHKey> GenerateECDHKey(string namedCurve = NamedCurve.P521, bool extractable = true)`
 - Generate a new ECDH crypto key
@@ -62,7 +72,7 @@ Inject PortableCrypto
 #### `Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey)`
 - Create a shared secret that is cross-platform compatible
 
-### PortableCrypto - ECDSA
+### ECDSA
 
 #### `Task<PortableECDSAKey> GenerateECDSAKey(string namedCurve = NamedCurve.P521, bool extractable = true)`
 - Generate a new ECDSA key
@@ -85,4 +95,16 @@ Inject PortableCrypto
 #### `Task<byte[]> Sign(PortableECDSAKey key, byte[] data, string hashName = HashName.SHA512)`
 - Sign data using an ECDSA key
 
+### AES-GCM
 
+#### `Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, int iterations = 25000, string hashName = HashName.SHA256, int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true)`
+- Generate an AES-GCM key using a secret byte array
+
+#### `Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, byte[] salt, int iterations = 25000, string hashName = HashName.SHA256, int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true)`
+- Generate an AES-GCM key using a secret byte array and a salt
+
+#### `Task<byte[]> Encrypt(PortableAESGCMKey key, byte[] plainBytes)`
+- Encrypt data using an AES-GCM key
+
+#### `Task<byte[]> Decrypt(PortableAESGCMKey key, byte[] encryptedData)`
+- Decrypt data using an AES-GCM key

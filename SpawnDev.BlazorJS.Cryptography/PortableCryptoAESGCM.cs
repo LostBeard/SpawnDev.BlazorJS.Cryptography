@@ -7,7 +7,7 @@ namespace SpawnDev.BlazorJS.Cryptography
     public partial class PortableCrypto
     {
         /// <summary>
-        /// Generate an AES-GCM key using a secret byte array and a salt
+        /// Generate an AES-GCM key using a secret byte array
         /// </summary>
         /// <param name="secret">The secret that will be used to generate the key<br/>The salt will be taken from the end of the secret</param>
         /// <param name="iterations">
@@ -143,7 +143,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             throw new NotImplementedException();
         }
         /// <summary>
-        /// Decrypt data usign an AES-GCM key
+        /// Decrypt data using an AES-GCM key
         /// </summary>
         /// <param name="key"></param>
         /// <param name="encryptedData"></param>
