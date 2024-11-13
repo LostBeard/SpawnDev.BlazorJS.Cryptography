@@ -6,7 +6,7 @@ A cross platform cryptography library that supports encryption with AES-GCM, sha
 
 This project aims to simplify common cryptography tasks with an API that is consistent on .Net Web API servers and in the web browser with Blazor WebAssembly.
 
-[PortableCrypto](#PortableCrypto) and the related classes wrap underlying cryptographic classes that are chosen based on the current platform. On Window and Linux, classes such as AesGcm, ECDiffieHellman, ECDsa, and SHA from Microsoft's System.Security.Cryptography library are used. When running under Blazor WebAssembly on the browser the browser [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) APIs are used. By wrapping these underlying libraries we can provide a consistent and reliable API regardless of the executing platform.
+[PortableCrypto](#PortableCrypto) and the related classes wrap underlying cryptographic classes that are chosen based on the executing platform. On Window and Linux, classes such as AesGcm, ECDiffieHellman, ECDsa, and SHA from Microsoft's System.Security.Cryptography library are used. When running under Blazor WebAssembly, the browser [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) APIs are used. By wrapping these underlying libraries we can provide a consistent and reliable API regardless of the executing platform.
 
 ### Getting started
 
@@ -17,13 +17,11 @@ dotnet add package SpawnDev.BlazorJS.Cryptography
 
 Add PortableCrypto service and SpawnDev.BlazorJS dependency to Program.cs 
 ```cs
-
 // Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();
 
 // Add PortableCrypto service
 builder.Services.AddSingleton<PortableCrypto>();
-
 ```
 
 Inject PortableCrypto
