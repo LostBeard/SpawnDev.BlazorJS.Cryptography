@@ -5,7 +5,7 @@
 A .Net cryptography library designed to run in .Net anywhere for compatibility between Blazor WebAssembly in the browser and Web API's running on .Net. 
 
 ### The problem this library solves
-- Microsoft's System.Security.Cryptography library does not work in Blazor WebAssembly. This library uses the browser's built in cryptography libraries [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) when running on the browser and Microsoft's System.Security.Cryptography libraries when running on Windows and Linux.
+Microsoft's System.Security.Cryptography library does not work in Blazor WebAssembly. This library uses the browser's built in cryptography libraries [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) when running on the browser and Microsoft's System.Security.Cryptography libraries when running on Windows and Linux.
 
 ### Features
 - AES-GCM - encryption and decryption
