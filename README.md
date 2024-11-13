@@ -2,14 +2,14 @@
 
 [![NuGet](https://badge.fury.io/nu/SpawnDev.BlazorJS.Cryptography.svg?delta=9&label=SpawnDev.BlazorJS.Cryptography)](https://www.nuget.org/packages/SpawnDev.BlazorJS.Cryptography)
 
-A .Net cryptography library designed to run in .Net anywhere for compatibility between Blazor WebAssembly in the browser and Web API's running on .Net. 
+A .Net cryptography library that runs in Blazor WebAssembly apps and in .Net Web APIs.
 
 ### The problem this library solves
 Microsoft's System.Security.Cryptography library does not work in Blazor WebAssembly. This library uses the browser's built in cryptography libraries [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) when running on the browser and Microsoft's System.Security.Cryptography libraries when running on Windows and Linux.
 
 ### Features
-- AES-GCM - encryption and decryption
-- ECDH - shared secret generation
+- AES-GCM - symmetric encryption and decryption
+- ECDH - shared secret generation (enables asymmetric encryption)
 - ECDSA - data signing and verification
 - SHA - data hashing
 
