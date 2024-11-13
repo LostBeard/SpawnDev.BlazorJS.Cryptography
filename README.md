@@ -18,8 +18,6 @@ A .Net cryptography library designed to run in .Net anywhere for compatibility b
 - Windows - uses System.Security.Cryptography
 - Linux - uses System.Security.Cryptography
 
-
-
 ### Getting started
 
 Add the Nuget package
