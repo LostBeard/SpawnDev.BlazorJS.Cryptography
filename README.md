@@ -14,7 +14,7 @@ Microsoft's System.Security.Cryptography library does not work in Blazor WebAsse
 - SHA - data hashing
 
 ### Supported Platforms
-- Browser (Blazor WebAssembly) - uses SubtleCrypto
+- Browser (Blazor WebAssembly) - uses [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto)
 - Windows - uses System.Security.Cryptography
 - Linux - uses System.Security.Cryptography
 
@@ -34,9 +34,10 @@ builder.Services.AddBlazorJSRuntime();
 builder.Services.AddSingleton<PortableCrypto>();
 ```
 
-Inject PortableCrypto service
+Inject PortableCrypto service into a component
 ```cs
-[Inject] PortableCrypto PortableCrypto { get; set; }
+[Inject] 
+PortableCrypto PortableCrypto { get; set; }
 ```
 
 ## PortableCrypto
