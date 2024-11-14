@@ -12,7 +12,8 @@
 <div>
     <ul>
         <li>
-            DotNetCrypto service runs on the browser and uses the Microsoft.Security.Cryptography library, which does not fully support the browser platform.
+            BrowserWASMCrypto service runs on the web browser and uses the browser's SubtleCrypto API.<br />
+            It uses the Blazor IJSInProcessRuntime and is only compatible with webassembly rendering.
         </li>
         <li>
             BrowserCrypto service runs on the web browser and uses the browser's SubtleCrypto API.<br/>
@@ -35,7 +36,7 @@
     BrowserCrypto BrowserCrypto { get; set; }
 
     [Inject]
-    BrowserWASMCrypto DotNetCrypto { get; set; }
+    BrowserWASMCrypto BrowserWASMCrypto { get; set; }
 
     [Inject]
     IJSRuntime JSR { get; set; }
@@ -63,7 +64,7 @@
         // ******************** SHA ********************
         // - Server
         // DotNetCrypto indicated by the appended D, executes on the server using Microsoft.Security.Cryptography
-        var hashD = await DotNetCrypto.Digest("SHA-512", data);
+        var hashD = await BrowserWASMCrypto.Digest("SHA-512", data);
 
         // - Browser
         // BrowserCrypto indicated by the appended B, executes on the browser using Javascript's SubtleCrypto APIs
@@ -81,9 +82,9 @@
         // ******************** ECDH ********************
         // - Server
         // generate server ECDH key
-        var ecdhD = await DotNetCrypto.GenerateECDHKey();
+        var ecdhD = await BrowserWASMCrypto.GenerateECDHKey();
         // export ecdhD public key for browser to use
-        var ecdhDPublicKeyBytes = await DotNetCrypto.ExportPublicKeySpki(ecdhD);
+        var ecdhDPublicKeyBytes = await BrowserWASMCrypto.ExportPublicKeySpki(ecdhD);
 
         // - Browser
         // generate browser ECDH key
@@ -93,9 +94,9 @@
 
         // - Server
         // import the browser's ECDH public key using DotNetCrypto so DotNetCrypto can work with it
-        var ecdhBPublicKeyD = await DotNetCrypto.ImportECDHKey(ecdhBPublicKeyBytes);
+        var ecdhBPublicKeyD = await BrowserWASMCrypto.ImportECDHKey(ecdhBPublicKeyBytes);
         // create shared secret
-        var sharedSecretD = await DotNetCrypto.DeriveBits(ecdhD, ecdhBPublicKeyD);
+        var sharedSecretD = await BrowserWASMCrypto.DeriveBits(ecdhD, ecdhBPublicKeyD);
 
         // - Browser
         // import the server's ECDH public key using BrowserCrypto so BrowserCrypto can work with it
