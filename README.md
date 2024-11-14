@@ -26,7 +26,7 @@ dotnet add package SpawnDev.BlazorJS.Cryptography
 ```
 
 #### Web API Server Project
-Blazor Server Program.cs
+Web API Server Program.cs
 ```cs
 // Crypto for the server. Uses System.Security.Cryptography.
 builder.Services.AddSingleton<DotNetCrypto>();
