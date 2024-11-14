@@ -70,7 +70,6 @@ BrowserCrypto BrowserCrypto { get; set; }
 - The below example, taken from the demo project, runs in Blazor server side rendering to test SHA hashing using the DotNetCrypto on the server and BrowserCrypto using IJSRuntime to run on the client browser.
 ```cs
 var data = new byte[] { 0, 1, 2 };
-// ******************** SHA ********************
 // - Server
 // DotNetCrypto indicated by the appended D, executes on the server using Microsoft.Security.Cryptography
 var hashD = await DotNetCrypto.Digest("SHA-512", data);
@@ -89,7 +88,6 @@ if (!hashB.SequenceEqual(hashD))
 ### ECDH Example
 - The below example, taken from the demo project, runs in Blazor server side rendering to test ECDH using the DotNetCrypto on the server and BrowserCrypto using IJSRuntime to run on the client browser.
 ```cs
-// ******************** ECDH ********************
 // - Server
 // generate server ECDH key
 var ecdhD = await DotNetCrypto.GenerateECDHKey();
