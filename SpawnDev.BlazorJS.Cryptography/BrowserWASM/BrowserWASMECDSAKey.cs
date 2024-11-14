@@ -1,11 +1,11 @@
 ﻿using SpawnDev.BlazorJS.JSObjects;
 
-namespace SpawnDev.BlazorJS.Cryptography
+namespace SpawnDev.BlazorJS.Cryptography.BrowserWASM
 {
     /// <summary>
-    /// Browser platform ECDH key
+    /// Browser platform ECDSA key
     /// </summary>
-    public class PortableECDHKeyJS : PortableECDHKey
+    public class BrowserWASMECDSAKey : PortableECDSAKey
     {
         /// <summary>
         /// The platform specific key
@@ -55,7 +55,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// Create a new instance
         /// </summary>
         /// <param name="key"></param>
-        public PortableECDHKeyJS(CryptoKeyPair key)
+        public BrowserWASMECDSAKey(CryptoKeyPair key)
         {
             Key = key;
         }

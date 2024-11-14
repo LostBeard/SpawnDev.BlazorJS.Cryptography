@@ -2,14 +2,14 @@
 
 namespace SpawnDev.BlazorJS.Cryptography
 {
-    public partial class PortableCrypto
+    public partial class BrowserWASMCrypto
     {
         /// <summary>
         /// Returns a bye array with the specified number of random bytes
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
-        public byte[] RandomBytes(int length)
+        public override byte[] RandomBytes(int length)
         {
             return RandomNumberGenerator.GetBytes(length);
         }
@@ -17,7 +17,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// Fill the byte array with random data
         /// </summary>
         /// <param name="data"></param>
-        public void RandomBytesFill(byte[] data)
+        public override void RandomBytesFill(byte[] data)
         {
             RandomNumberGenerator.Fill(data);
         }
@@ -25,7 +25,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// Fill the byte span with random data
         /// </summary>
         /// <param name="data"></param>
-        public void RandomBytesFill(Span<byte> data)
+        public override void RandomBytesFill(Span<byte> data)
         {
             RandomNumberGenerator.Fill(data);
         }

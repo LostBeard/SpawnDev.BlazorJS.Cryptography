@@ -3,7 +3,7 @@
     /// <summary>
     /// PortableKey abstract class
     /// </summary>
-    public abstract class PortableKey : IDisposable
+    public abstract class PortableKey : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// Key algorithm
@@ -35,6 +35,13 @@
             IsDisposed = true;
             GC.SuppressFinalize(this);
             Dispose(false);
+        }
+        /// <summary>
+        /// Dispose instance resources
+        /// </summary>
+        public virtual ValueTask DisposeAsync()
+        {
+            return ValueTask.CompletedTask;
         }
         /// <summary>
         /// Instance finalizer

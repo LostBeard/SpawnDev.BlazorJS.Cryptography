@@ -1,11 +1,11 @@
 ﻿using SpawnDev.BlazorJS.JSObjects;
 
-namespace SpawnDev.BlazorJS.Cryptography
+namespace SpawnDev.BlazorJS.Cryptography.BrowserWASM
 {
     /// <summary>
     /// Browser platform AES-GCM key
     /// </summary>
-    public class PortableAESGCMKeyJS : PortableAESGCMKey
+    public class BrowserWASMAESGCMKey : PortableAESGCMKey
     {
         /// <summary>
         /// The platform specific key
@@ -25,7 +25,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="key"></param>
         /// <param name="nonceSizeBytes"></param>
         /// <param name="tagSizeBytes"></param>
-        public PortableAESGCMKeyJS(CryptoKey key, int nonceSizeBytes, int tagSizeBytes)
+        public BrowserWASMAESGCMKey(CryptoKey key, int nonceSizeBytes, int tagSizeBytes)
         {
             Key = key;
             NonceSizeBytes = nonceSizeBytes;

@@ -1,27 +1,29 @@
 ﻿using System.Security.Cryptography;
 
-namespace SpawnDev.BlazorJS.Cryptography
+namespace SpawnDev.BlazorJS.Cryptography.DotNet
 {
     /// <summary>
-    /// Windows, Linux platform ECDSA key
+    /// Windows, Linux platform AES-GCM key
     /// </summary>
-    public class PortableECDSAKeyNet : PortableECDSAKey
+    public class DotNetAESGCMKey : PortableAESGCMKey
     {
         /// <summary>
         /// The platform specific key
         /// </summary>
-        public ECDsa Key { get; protected set; }
+        public AesGcm Key { get; protected set; }
         /// <summary>
-        /// The named curve
+        /// The key tag size
         /// </summary>
-        public override string NamedCurve => $"P-{Key.KeySize}";
+        public override int TagSizeBytes => Key?.TagSizeInBytes ?? 0;
         /// <summary>
-        /// Create a new instance
+        /// Creates a new instance
         /// </summary>
         /// <param name="key"></param>
-        public PortableECDSAKeyNet(ECDsa key)
+        /// <param name="nonceSizeBytes"></param>
+        public DotNetAESGCMKey(AesGcm key, int nonceSizeBytes)
         {
             Key = key;
+            NonceSizeBytes = nonceSizeBytes;
         }
         /// <summary>
         /// Dispose instance resources

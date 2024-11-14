@@ -5,7 +5,7 @@
 A .Net cryptography library that runs in Blazor WebAssembly apps and in .Net Web APIs.
 
 ### The problem this library solves
-Microsoft's System.Security.Cryptography library does not work in Blazor WebAssembly. This library uses the browser's built in cryptography libraries [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) when running on the browser and Microsoft's System.Security.Cryptography libraries when running on Windows and Linux.
+Microsoft's System.Security.Cryptography library does not work in Blazor WebAssembly. This library uses the browser's built in [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) cryptography libraries when running in the browser and Microsoft's System.Security.Cryptography libraries when running on Windows and Linux.
 
 ### Features
 - AES-GCM - symmetric encryption and decryption
@@ -25,24 +25,103 @@ Add the Nuget package
 dotnet add package SpawnDev.BlazorJS.Cryptography
 ```
 
-Add PortableCrypto service and SpawnDev.BlazorJS dependency to Program.cs 
+#### Web API Server Project
+Blazor Server Program.cs
 ```cs
-// Add BlazorJSRuntime service
-builder.Services.AddBlazorJSRuntime();
-
-// Add PortableCrypto service
-builder.Services.AddSingleton<PortableCrypto>();
+// Crypto for the server. Uses System.Security.Cryptography.
+builder.Services.AddSingleton<DotNetCrypto>();
 ```
 
-Inject PortableCrypto service into a component
+#### Blazor Server Project
+Blazor Server Program.cs
+```cs
+// Add BlazorJSRuntime service (pre-req)
+builder.Services.AddBlazorJSRuntime();
+
+// Crypto for the server. Uses System.Security.Cryptography.
+builder.Services.AddSingleton<DotNetCrypto>();
+
+// Crypto for the browser. Uses the browser's SubtleCrypto API.
+// Used on server for server side rendering
+builder.Services.AddScoped<BrowserCrypto>();
+```
+
+#### Blazor WebAssembly
+WebAssembly Program.cs 
+```cs
+// Add BlazorJSRuntime service (pre-req)
+builder.Services.AddBlazorJSRuntime();
+
+// Crypto for the browser. Uses the browser's SubtleCrypto API.
+// Used in Blazor WebAssembly for WebAssembly rendering
+builder.Services.AddScoped<BrowserCrypto>();
+```
+
+Inject BrowserCrypto service into a component to access the Cryptography on the browser. Works with both server side and web assembly rendering.
 ```cs
 [Inject] 
-PortableCrypto PortableCrypto { get; set; }
+BrowserCrypto BrowserCrypto { get; set; }
 ```
 
 ## PortableCrypto
-- The PortableCrypto service provides an API that can be used on the server and on the browser to provide cross platform compatible cryptographic methods.
+- The PortableCrypto services, `DotNetCrypto` and `BrowserCrypto` provide an API that can be used on the server and on the browser to provide cross platform compatible cryptographic methods.
 
+### SHA Example
+- The below example, taken from the demo project, runs in Blazor server side rendering to test SHA hashing using the DotNetCrypto on the server and BrowserCrypto using IJSRuntime to run on the client browser.
+```cs
+var data = new byte[] { 0, 1, 2 };
+// ******************** SHA ********************
+// - Server
+// DotNetCrypto indicated by the appended D, executes on the server using Microsoft.Security.Cryptography
+var hashD = await DotNetCrypto.Digest("SHA-512", data);
+
+// - Browser
+// BrowserCrypto indicated by the appended B, executes on the browser using Javascript's SubtleCrypto APIs
+var hashB = await BrowserCrypto.Digest("SHA-512", data);
+
+// verify the hashes match
+if (!hashB.SequenceEqual(hashD))
+{
+    throw new Exception("Hash mismatch");
+}
+```
+
+### ECDH Example
+- The below example, taken from the demo project, runs in Blazor server side rendering to test ECDH using the DotNetCrypto on the server and BrowserCrypto using IJSRuntime to run on the client browser.
+```cs
+// ******************** ECDH ********************
+// - Server
+// generate server ECDH key
+var ecdhD = await DotNetCrypto.GenerateECDHKey();
+// export ecdhD public key for browser to use
+var ecdhDPublicKeyBytes = await DotNetCrypto.ExportPublicKeySpki(ecdhD);
+
+// - Browser
+// generate browser ECDH key
+var ecdhB = await BrowserCrypto.GenerateECDHKey();
+// export ecdhB public key for server to use
+var ecdhBPublicKeyBytes = await BrowserCrypto.ExportPublicKeySpki(ecdhB);
+
+// - Server
+// import the browser's ECDH public key using DotNetCrypto so DotNetCrypto can work with it
+var ecdhBPublicKeyD = await DotNetCrypto.ImportECDHKey(ecdhBPublicKeyBytes);
+// create shared secret
+var sharedSecretD = await DotNetCrypto.DeriveBits(ecdhD, ecdhBPublicKeyD);
+
+// - Browser
+// import the server's ECDH public key using BrowserCrypto so BrowserCrypto can work with it
+var ecdhDPublicKeyB = await BrowserCrypto.ImportECDHKey(ecdhDPublicKeyBytes);
+// create shared secret
+var sharedSecretB = await BrowserCrypto.DeriveBits(ecdhB, ecdhDPublicKeyB);
+
+// verify the shared secrets match
+if (!sharedSecretB.SequenceEqual(sharedSecretD))
+{
+    throw new Exception("Shared secret mismatch");
+}
+```
+
+## PortableCrypto API
 ### SHA
 
 #### `Task<byte[]> Digest(string hashName, byte[] data)`

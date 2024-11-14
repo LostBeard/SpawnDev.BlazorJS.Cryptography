@@ -1,12 +1,12 @@
-﻿using SpawnDev.BlazorJS.JSObjects;
+﻿
 using System.Security.Cryptography;
 
-namespace SpawnDev.BlazorJS.Cryptography
+namespace SpawnDev.BlazorJS.Cryptography.DotNet
 {
     /// <summary>
     /// Windows, Linux platform ECDH key
     /// </summary>
-    public class PortableECDHKeyNet : PortableECDHKey
+    public class DotNetECDHKey : PortableECDHKey
     {
         /// <summary>
         /// The platform specific key
@@ -20,7 +20,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// Create a new instance
         /// </summary>
         /// <param name="key"></param>
-        public PortableECDHKeyNet(ECDiffieHellman key)
+        public DotNetECDHKey(ECDiffieHellman key)
         {
             Key = key;
         }

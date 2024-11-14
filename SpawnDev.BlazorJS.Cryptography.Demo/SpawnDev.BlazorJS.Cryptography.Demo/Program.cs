@@ -1,6 +1,5 @@
 using SpawnDev.BlazorJS;
 using SpawnDev.BlazorJS.Cryptography;
-using SpawnDev.BlazorJS.Cryptography.Demo.Client.Pages;
 using SpawnDev.BlazorJS.Cryptography.Demo.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,8 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();
 
-// Add PortableCrypto service
-builder.Services.AddSingleton<PortableCrypto>();
+// Crypto for the server. Uses System.Security.Cryptography.
+builder.Services.AddSingleton<DotNetCrypto>();
+
+// Crypto for the browser. Uses the browser's SubtleCrypto API.
+// Used on server for server side rendering
+builder.Services.AddScoped<BrowserCrypto>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

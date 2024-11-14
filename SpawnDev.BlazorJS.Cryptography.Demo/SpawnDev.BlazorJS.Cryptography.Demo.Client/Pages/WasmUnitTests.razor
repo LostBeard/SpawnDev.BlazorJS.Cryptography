@@ -1,9 +1,9 @@
-﻿@page "/"
+﻿@page "/WasmUnitTests"
 @using SpawnDev.BlazorJS.Cryptography.Browser
 @using SpawnDev.BlazorJS.RemoteJSRuntime
 @using SpawnDev.Blazor.UnitTesting
 @using System.Reflection
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 <PageTitle>Home</PageTitle>
 
@@ -12,7 +12,7 @@
 <div>
     <ul>
         <li>
-            DotNetCrypto service runs on the server and uses the Microsoft.Security.Cryptography library.
+            DotNetCrypto service runs on the browser and uses the Microsoft.Security.Cryptography library, which does not fully support the browser platform.
         </li>
         <li>
             BrowserCrypto service runs on the web browser and uses the browser's SubtleCrypto API.<br/>
@@ -35,7 +35,7 @@
     BrowserCrypto BrowserCrypto { get; set; }
 
     [Inject]
-    DotNetCrypto DotNetCrypto { get; set; }
+    BrowserWASMCrypto DotNetCrypto { get; set; }
 
     [Inject]
     IJSRuntime JSR { get; set; }

@@ -1,4 +1,5 @@
 ﻿@page "/test"
+@using SpawnDev.BlazorJS.RemoteJSRuntime
 @using System.Text
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
@@ -7,6 +8,7 @@
 <h1>PortableCrypto Test</h1>
 
 <button class="btn btn-primary" disabled="@Busy" @onclick="IncrementCount">Click me</button>
+<button class="btn btn-primary" disabled="@Busy" @onclick="IncrementCount2">Click me 2</button>
 
 <div>
     ECDH public key:<br />
@@ -35,7 +37,13 @@
     HttpClient HttpClient { get; set; }
 
     [Inject]
-    PortableCrypto PortableCrypto { get; set; }
+    BrowserCrypto BrowserCrypto { get; set; }
+
+    [Inject]
+    BrowserWASMCrypto BrowserWASMCrypto { get; set; }
+
+    [Inject]
+    BlazorJSRuntimeAsync JSA { get; set; }
 
     // local ECDSA key for signing
     PortableECDSAKey? ECDSAKey = null;
@@ -65,18 +73,18 @@
         try
         {
             // create local ECDSA key for signing
-            ECDSAKey ??= await PortableCrypto.GenerateECDSAKey();
+            ECDSAKey = await BrowserCrypto.GenerateECDSAKey();
             // create local ECDH for shared secret creation
-            ECDHKey ??= await PortableCrypto.GenerateECDHKey();
-            ECDSAKeyB64 ??= Convert.ToBase64String(await PortableCrypto.ExportPublicKeySpki(ECDSAKey!));
-            ECDHKeyB64 ??= Convert.ToBase64String(await PortableCrypto.ExportPublicKeySpki(ECDHKey!));
-            ServerECDSAKey ??= await PortableCrypto.ImportECDSAKey(await Get<byte[]>("ecdsa"));
-            ServerECDHKey ??= await PortableCrypto.ImportECDHKey(await Get<byte[]>("ecdh"));
-            ServerECDSAKeyB64 ??= Convert.ToBase64String(await PortableCrypto.ExportPublicKeySpki(ServerECDSAKey!));
-            ServerECDHKeyB64 ??= Convert.ToBase64String(await PortableCrypto.ExportPublicKeySpki(ServerECDHKey!));
+            ECDHKey = await BrowserCrypto.GenerateECDHKey();
+            ECDSAKeyB64 = Convert.ToBase64String(await BrowserCrypto.ExportPublicKeySpki(ECDSAKey!));
+            ECDHKeyB64 = Convert.ToBase64String(await BrowserCrypto.ExportPublicKeySpki(ECDHKey!));
+            ServerECDSAKey = await BrowserCrypto.ImportECDSAKey(await Get<byte[]>("ecdsa"));
+            ServerECDHKey = await BrowserCrypto.ImportECDHKey(await Get<byte[]>("ecdh"));
+            ServerECDSAKeyB64 = Convert.ToBase64String(await BrowserCrypto.ExportPublicKeySpki(ServerECDSAKey!));
+            ServerECDHKeyB64 = Convert.ToBase64String(await BrowserCrypto.ExportPublicKeySpki(ServerECDHKey!));
             // derive a shared secret using the other party's (server's) public ECDH key and this party's (browser's) private ECDH key
             // the shared secret should be identical on both sides
-            var sharedSecret = await PortableCrypto.DeriveBits(ECDHKey, ServerECDHKey);
+            var sharedSecret = await BrowserCrypto.DeriveBits(ECDHKey, ServerECDHKey);
             // get the shared secret from the server to verify it matches (you would never do this in production)
             var serversSharedSecret = await Post<byte[]>("GetSharedSecret", new GetSharedSecretArgs { SenderECDHPublicKeyB64 = ECDHKeyB64 });
             if (serversSharedSecret == null || !sharedSecret.SequenceEqual(serversSharedSecret))
@@ -84,14 +92,61 @@
                 throw new Exception("The server generated shared secret did not match the locally generated shared secret");
             }
             // create an encryption key based on the shared secret
-            using var encKey = await PortableCrypto.GenerateAESGCMKey(sharedSecret);
+            using var encKey = await BrowserCrypto.GenerateAESGCMKey(sharedSecret);
             // encrypt test message to send to the server to verify it can decrypt it. it will reply with an encrypted message we must decode.
             var testMsgBytes = Encoding.UTF8.GetBytes(TestString);
-            var encMsg = await PortableCrypto.Encrypt(encKey, testMsgBytes);
+            var encMsg = await BrowserCrypto.Encrypt(encKey, testMsgBytes);
             // send to the server
             var serversEncryptedResponse = await Post<byte[]>("EncryptionTest", new EncryptionTestArgs { EncryptedMessage = encMsg, SenderECDHPublicKeyB64 = ECDHKeyB64 });
             // decrypt the server's response
-            var serversDecryptedResponse = await PortableCrypto.Decrypt(encKey, serversEncryptedResponse);
+            var serversDecryptedResponse = await BrowserCrypto.Decrypt(encKey, serversEncryptedResponse);
+            // convert bytes to text
+            var response = Encoding.UTF8.GetString(serversDecryptedResponse);
+            if ("Response message!" != response)
+            {
+                throw new Exception("Failed to decrypt the message");
+            }
+        }
+        finally
+        {
+            BusyCount--;
+        }
+        StateHasChanged();
+    }
+    private async Task IncrementCount2()
+    {
+        BusyCount++;
+        StateHasChanged();
+        try
+        {
+            // create local ECDSA key for signing
+            ECDSAKey = await BrowserWASMCrypto.GenerateECDSAKey();
+            // create local ECDH for shared secret creation
+            ECDHKey = await BrowserWASMCrypto.GenerateECDHKey();
+            ECDSAKeyB64 = Convert.ToBase64String(await BrowserWASMCrypto.ExportPublicKeySpki(ECDSAKey!));
+            ECDHKeyB64 = Convert.ToBase64String(await BrowserWASMCrypto.ExportPublicKeySpki(ECDHKey!));
+            ServerECDSAKey = await BrowserWASMCrypto.ImportECDSAKey(await Get<byte[]>("ecdsa"));
+            ServerECDHKey = await BrowserWASMCrypto.ImportECDHKey(await Get<byte[]>("ecdh"));
+            ServerECDSAKeyB64 = Convert.ToBase64String(await BrowserWASMCrypto.ExportPublicKeySpki(ServerECDSAKey!));
+            ServerECDHKeyB64 = Convert.ToBase64String(await BrowserWASMCrypto.ExportPublicKeySpki(ServerECDHKey!));
+            // derive a shared secret using the other party's (server's) public ECDH key and this party's (browser's) private ECDH key
+            // the shared secret should be identical on both sides
+            var sharedSecret = await BrowserWASMCrypto.DeriveBits(ECDHKey, ServerECDHKey);
+            // get the shared secret from the server to verify it matches (you would never do this in production)
+            var serversSharedSecret = await Post<byte[]>("GetSharedSecret", new GetSharedSecretArgs { SenderECDHPublicKeyB64 = ECDHKeyB64 });
+            if (serversSharedSecret == null || !sharedSecret.SequenceEqual(serversSharedSecret))
+            {
+                throw new Exception("The server generated shared secret did not match the locally generated shared secret");
+            }
+            // create an encryption key based on the shared secret
+            using var encKey = await BrowserWASMCrypto.GenerateAESGCMKey(sharedSecret);
+            // encrypt test message to send to the server to verify it can decrypt it. it will reply with an encrypted message we must decode.
+            var testMsgBytes = Encoding.UTF8.GetBytes(TestString);
+            var encMsg = await BrowserWASMCrypto.Encrypt(encKey, testMsgBytes);
+            // send to the server
+            var serversEncryptedResponse = await Post<byte[]>("EncryptionTest", new EncryptionTestArgs { EncryptedMessage = encMsg, SenderECDHPublicKeyB64 = ECDHKeyB64 });
+            // decrypt the server's response
+            var serversDecryptedResponse = await BrowserWASMCrypto.Decrypt(encKey, serversEncryptedResponse);
             // convert bytes to text
             var response = Encoding.UTF8.GetString(serversDecryptedResponse);
             if ("Response message!" != response)

@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Runtime.InteropServices;
+﻿using Microsoft.AspNetCore.Mvc;
+
 using System.Text;
 using static SpawnDev.BlazorJS.Cryptography.Demo.Client.Pages.TestPage;
 
@@ -11,10 +10,10 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
     public class CryptographyTestController : ControllerBase
     {
 
-        PortableCrypto PortableCrypto;
-        public CryptographyTestController(PortableCrypto portableCrypto)
+        DotNetCrypto DotNetCrypto;
+        public CryptographyTestController(DotNetCrypto dotNetCrypto)
         {
-            PortableCrypto = portableCrypto;
+            DotNetCrypto = dotNetCrypto;
             
         }
         static bool BeenInit = false;
@@ -24,15 +23,15 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         {
             if (BeenInit) return;
             BeenInit = true;
-            ECDSAKey = await PortableCrypto.GenerateECDSAKey();
-            ECDHKey = await PortableCrypto.GenerateECDHKey();
+            ECDSAKey = await DotNetCrypto.GenerateECDSAKey();
+            ECDHKey = await DotNetCrypto.GenerateECDHKey();
         }
 
         [HttpGet("ecdsa")]
         public async Task<byte[]> GetECDSA()
         {
             await InitAsync();
-            var publicKeyBytes = await PortableCrypto.ExportPublicKeySpki(ECDSAKey!);
+            var publicKeyBytes = await DotNetCrypto.ExportPublicKeySpki(ECDSAKey!);
             return publicKeyBytes;
         }
 
@@ -40,7 +39,7 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         public async Task<byte[]> GetECDH()
         {
             await InitAsync();
-            var publicKeyBytes = await PortableCrypto.ExportPublicKeySpki(ECDHKey!);
+            var publicKeyBytes = await DotNetCrypto.ExportPublicKeySpki(ECDHKey!);
             return publicKeyBytes;
         }
 
@@ -57,10 +56,10 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         {
             await InitAsync();
             // import the browser's base64 encoded ECDH public key
-            using var browsersECDHKey = await PortableCrypto.ImportECDHKey(Convert.FromBase64String(args.SenderECDHPublicKeyB64));
+            using var browsersECDHKey = await DotNetCrypto.ImportECDHKey(Convert.FromBase64String(args.SenderECDHPublicKeyB64));
             // generate a shared secret
             // the browser will geenrate a secret that should be identical to the one the server creates
-            var sharedSecret = await PortableCrypto.DeriveBits(ECDHKey!, browsersECDHKey);
+            var sharedSecret = await DotNetCrypto.DeriveBits(ECDHKey!, browsersECDHKey);
             // send it to the browser for comparison. you would never do this in production.
             return sharedSecret;
         }
@@ -70,14 +69,14 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         {
             await InitAsync();
             // import the browser's base64 encoded ECDH public key
-            using var browsersECDHKey = await PortableCrypto.ImportECDHKey(Convert.FromBase64String(args.SenderECDHPublicKeyB64));
+            using var browsersECDHKey = await DotNetCrypto.ImportECDHKey(Convert.FromBase64String(args.SenderECDHPublicKeyB64));
             // generate a shared secret
             // the browser will generate a secret that should be identical to the one the server creates
-            var sharedSecret = await PortableCrypto.DeriveBits(ECDHKey!, browsersECDHKey);
+            var sharedSecret = await DotNetCrypto.DeriveBits(ECDHKey!, browsersECDHKey);
             // create an encryption key based on the shared secret
-            using var encKey = await PortableCrypto.GenerateAESGCMKey(sharedSecret);
+            using var encKey = await DotNetCrypto.GenerateAESGCMKey(sharedSecret);
             // decrypt the message encrypted by the browser
-            var origMsgBytes = await PortableCrypto.Decrypt(encKey, args.EncryptedMessage);
+            var origMsgBytes = await DotNetCrypto.Decrypt(encKey, args.EncryptedMessage);
             // convert the message to text
             var origMsg = Encoding.UTF8.GetString(origMsgBytes);
             // send an encryptd response
@@ -85,7 +84,7 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
             // convert bytes to text
             var responseBytes = Encoding.UTF8.GetBytes(responseMsg);
             // encrypt using the shared key
-            var encMsg = await PortableCrypto.Encrypt(encKey, responseBytes);
+            var encMsg = await DotNetCrypto.Encrypt(encKey, responseBytes);
             // send it to the browser for comparison. you would never do this in production.
             return encMsg;
         }
