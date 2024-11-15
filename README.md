@@ -13,8 +13,8 @@ Most of Microsoft's System.Security.Cryptography library is marked `[Unsupported
 - ECDSA - data signing and verification
 - SHA - data hashing
 
-### PortableCrypto Services
-The classes `DotNetCrypto`, `BrowserCrypto`, and `BrowserWASMCrypto` all inherit from [`PortableCrypto`](#portablerrypto-abstract-class) to provide a shared interface to common cryptography methods regardless of the platform the app is being executed on.
+### PortableCrypto Classes
+The classes `DotNetCrypto`, `BrowserCrypto`, and `BrowserWASMCrypto` all inherit from [`PortableCrypto`](#portablecrypto-abstract-class) to provide a shared interface to common cryptography methods regardless of the platform the app is being executed on.
    
 **DotNetCrypto**  
 - Uses .Net System.Security.Cryptography on the executing platform
@@ -124,7 +124,7 @@ if (!sharedSecretB.SequenceEqual(sharedSecretD))
 }
 ```
 
-## PortableCrypto abstract class
+## PortableCrypto Abstract Class
 
 ### SHA - Data Hashing
 
