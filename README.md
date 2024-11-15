@@ -2,10 +2,10 @@
 
 [![NuGet](https://badge.fury.io/nu/SpawnDev.BlazorJS.Cryptography.svg?delta=9&label=SpawnDev.BlazorJS.Cryptography)](https://www.nuget.org/packages/SpawnDev.BlazorJS.Cryptography)
 
-A .Net cryptography library that runs in Blazor WebAssembly apps and in .Net Web APIs.
+.Net cryptography library for Blazor, .Net Web APIs, and .Net apps. Supports browser and non-browser platforms.
 
 ### The problem this library solves
-Microsoft's System.Security.Cryptography library does not work in Blazor WebAssembly. This library uses the browser's built in [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) cryptography libraries when running in the browser and Microsoft's System.Security.Cryptography libraries when running on Windows and Linux.
+Most of Microsoft's System.Security.Cryptography library is marked `[UnsupportedOSPlatform("browser")]`. To work around this limitation, the browser's built in [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) API is used when running in the browser and Microsoft's System.Security.Cryptography libraries are used when running on non-browser platforms.
 
 ### Features
 - AES-GCM - symmetric encryption and decryption
@@ -13,10 +13,24 @@ Microsoft's System.Security.Cryptography library does not work in Blazor WebAsse
 - ECDSA - data signing and verification
 - SHA - data hashing
 
-### Supported Platforms
-- Browser (Blazor WebAssembly) - uses [Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) and [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto)
-- Windows - uses System.Security.Cryptography
-- Linux - uses System.Security.Cryptography
+### PortableCrypto Services
+The classes `DotNetCrypto`, `BrowserCrypto`, and `BrowserWASMCrypto` all inherit from [`PortableCrypto`](#portablerrypto-abstract-class) to provide a shared interface to common cryptography methods regardless of the platform the app is being executed on.
+   
+**DotNetCrypto**  
+- Uses .Net System.Security.Cryptography on the executing platform
+- Browser platform not supported
+- Supports non-browser platforms (windows, linux, etc)
+- Targets Blazor server, .Net Web APIs, any non-browser platform .Net Apps
+  
+**BrowserCrypto**
+- Uses IJSRuntime to access the browser's [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) API
+- Supports both server rendering and WebAssembly rendering modes
+- Targets the browser platform via Blazor server or Blazor WebAssembly
+  
+**BrowserWASMCrypto**
+- Uses IJInProcessSRuntime to access the browser's [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) API
+- Supports only WebAssembly rendering
+- Targets the browser via Blazor WebAssembly
 
 ### Getting started
 
@@ -41,7 +55,7 @@ builder.Services.AddBlazorJSRuntime();
 // Crypto for the server. Uses System.Security.Cryptography.
 builder.Services.AddSingleton<DotNetCrypto>();
 
-// Crypto for the browser. Uses the browser's SubtleCrypto API.
+// Crypto for the browser. Uses the browser's SubtleCrypto API via IJSRuntime.
 // Used on server for server side rendering
 builder.Services.AddScoped<BrowserCrypto>();
 ```
@@ -56,15 +70,6 @@ builder.Services.AddBlazorJSRuntime();
 // Used in Blazor WebAssembly for WebAssembly rendering
 builder.Services.AddScoped<BrowserCrypto>();
 ```
-
-Inject BrowserCrypto service into a component to access the Cryptography on the browser. Works with both server side and web assembly rendering.
-```cs
-[Inject] 
-BrowserCrypto BrowserCrypto { get; set; }
-```
-
-## PortableCrypto
-- The PortableCrypto services, `DotNetCrypto` and `BrowserCrypto` provide an API that can be used on the server and on the browser to provide cross platform compatible cryptographic methods.
 
 ### SHA Example
 - The below example, taken from the demo project, runs in Blazor server side rendering to test SHA hashing using the DotNetCrypto on the server and BrowserCrypto using IJSRuntime to run on the client browser.
@@ -119,13 +124,14 @@ if (!sharedSecretB.SequenceEqual(sharedSecretD))
 }
 ```
 
-## PortableCrypto API
-### SHA
+## PortableCrypto abstract class
+
+### SHA - Data Hashing
 
 #### `Task<byte[]> Digest(string hashName, byte[] data)`
 - Hash the specified data using the specified hash algorithm
 
-### ECDH
+### ECDH - Shared secret generation
 
 #### `Task<PortableECDHKey> GenerateECDHKey(string namedCurve = NamedCurve.P521, bool extractable = true)`
 - Generate a new ECDH crypto key
@@ -148,7 +154,7 @@ if (!sharedSecretB.SequenceEqual(sharedSecretD))
 #### `Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey)`
 - Create a shared secret that is cross-platform compatible
 
-### ECDSA
+### ECDSA - Data Signing
 
 #### `Task<PortableECDSAKey> GenerateECDSAKey(string namedCurve = NamedCurve.P521, bool extractable = true)`
 - Generate a new ECDSA key
@@ -171,7 +177,7 @@ if (!sharedSecretB.SequenceEqual(sharedSecretD))
 #### `Task<byte[]> Sign(PortableECDSAKey key, byte[] data, string hashName = HashName.SHA512)`
 - Sign data using an ECDSA key
 
-### AES-GCM
+### AES-GCM - Data Encryption
 
 #### `Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, int iterations = 25000, string hashName = HashName.SHA256, int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true)`
 - Generate an AES-GCM key using a secret byte array
