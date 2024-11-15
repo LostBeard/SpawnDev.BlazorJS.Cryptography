@@ -13,7 +13,6 @@
         {
             await using var arrayBuffer = await SubtleCrypto.Digest(hashName, data);
             var hash = await arrayBuffer.ReadBytes();
-            //var hash = await ArrayBufferToBytes(arrayBuffer);
             return hash;
         }
     }

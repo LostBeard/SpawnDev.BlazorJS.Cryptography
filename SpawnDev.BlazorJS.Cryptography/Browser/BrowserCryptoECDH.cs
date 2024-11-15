@@ -1,5 +1,6 @@
 ﻿using SpawnDev.BlazorJS.Cryptography.Browser;
 using SpawnDev.BlazorJS.JSObjects;
+using SpawnDev.BlazorJS.RemoteJSRuntime;
 using SpawnDev.BlazorJS.RemoteJSRuntime.AsyncObjects;
 
 namespace SpawnDev.BlazorJS.Cryptography
@@ -33,9 +34,9 @@ namespace SpawnDev.BlazorJS.Cryptography
         public override async Task<byte[]> ExportPublicKeySpki(PortableECDHKey key)
         {
             if (key is not BrowserECDHKey keyJS) throw new NotImplementedException();
-            await using var publicKey = await keyJS.Key.Get_PublicKey();
+            var publicKey = await keyJS.Key.Get_PublicKey();
             await using var arrayBuffer = await SubtleCrypto.ExportKeySpki(publicKey!);
-            return await ArrayBufferToBytes(arrayBuffer);
+            return await arrayBuffer.ReadBytes();
         }
         /// <summary>
         /// Exports the private key in Pkcs8 format
@@ -48,7 +49,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             if (key is not BrowserECDHKey keyJS) throw new NotImplementedException();
             await using var privateKey = await keyJS.Key.Get_PrivateKey();
             await using var arrayBuffer = await SubtleCrypto!.ExportKeyPkcs8(privateKey!);
-            return await ArrayBufferToBytes(arrayBuffer);
+            return await arrayBuffer.ReadBytes();
         }
         /// <summary>
         /// Import an ECDH public key
@@ -66,8 +67,8 @@ namespace SpawnDev.BlazorJS.Cryptography
         public override async Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, string namedCurve = NamedCurve.P521, bool extractable = true)
         {
             var keyUsages = new string[] { };
-            var publicKey = await SubtleCrypto!.ImportKey<CryptoKeyAsync>("spki", publicKeySpki, new EcKeyImportParams { Name = Algorithm.ECDH, NamedCurve = namedCurve }, extractable, keyUsages);
-            var key = await JSA.NewAsync<CryptoKeyPairAsync>();
+            var publicKey = await SubtleCrypto!.ImportKey("spki", publicKeySpki, new EcKeyImportParams { Name = Algorithm.ECDH, NamedCurve = namedCurve }, extractable, keyUsages);
+            var key = await CryptoKeyPairAsync.New(JSA);
             await key.Set_PublicKey(publicKey);
             return new BrowserECDHKey(key, namedCurve, extractable, keyUsages);
         }
@@ -88,9 +89,9 @@ namespace SpawnDev.BlazorJS.Cryptography
         public override async Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, byte[] privateKeyPkcs8, string namedCurve = NamedCurve.P521, bool extractable = true)
         {
             var keyUsages = new string[] { "deriveBits", "deriveKey" };
-            var privateKey = await SubtleCrypto!.ImportKey<CryptoKeyAsync>("pkcs8", privateKeyPkcs8, new EcKeyImportParams { Name = Algorithm.ECDH, NamedCurve = namedCurve }, extractable, keyUsages);
-            var publicKey = await SubtleCrypto!.ImportKey<CryptoKeyAsync>("spki", publicKeySpki, new EcKeyImportParams { Name = Algorithm.ECDH, NamedCurve = namedCurve }, extractable, new string[] { });
-            var key = await JSA.NewAsync<CryptoKeyPairAsync>();
+            var privateKey = await SubtleCrypto!.ImportKey("pkcs8", privateKeyPkcs8, new EcKeyImportParams { Name = Algorithm.ECDH, NamedCurve = namedCurve }, extractable, keyUsages);
+            var publicKey = await SubtleCrypto!.ImportKey("spki", publicKeySpki, new EcKeyImportParams { Name = Algorithm.ECDH, NamedCurve = namedCurve }, extractable, new string[] { });
+            var key = await CryptoKeyPairAsync.New(JSA);
             await key.Set_PublicKey(publicKey);
             await key.Set_PrivateKey(privateKey);
             return new BrowserECDHKey(key, namedCurve, extractable, keyUsages);
@@ -116,7 +117,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             await using var otherPartyPublicKey = await otherPartyKeyJS!.Key.Get_PublicKey();
             if (otherPartyPublicKey == null) throw new ArgumentNullException($"otherPartyKey.Key.PublicKey cannot be null");
             await using var sharedSecret = await SubtleCrypto!.DeriveBits(new EcdhKeyDeriveParamsAsync { Public = otherPartyPublicKey }, localPartyPrivateKey, bitLength);
-            var sharedSecretBytes = await ArrayBufferToBytes(sharedSecret);
+            var sharedSecretBytes = await sharedSecret.ReadBytes();
             return sharedSecretBytes;
         }
         /// <summary>

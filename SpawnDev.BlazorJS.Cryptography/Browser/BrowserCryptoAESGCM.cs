@@ -93,7 +93,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             var nonce = RandomBytes(nonceSize);
             //
             await using var ret = await SubtleCrypto.Encrypt(new AesGcmParams { Iv = nonce, TagLength = tagSize * 8 }, jsKey!.Key, plainBytes);
-            var cipherDataAndTag = await ArrayBufferToBytes(ret);
+            var cipherDataAndTag = await ret.ReadBytes();
             //using var ret = await SubtleCrypto!.Encrypt(new AesGcmParams { Iv = nonce, TagLength = tagSize * 8 }, jsKey!.Key, plainBytes);
             //var cipherDataAndTag = ret.ReadBytes();
             // SubtleCrypto, unlike .Net, appends the tag data to the cipherData
@@ -135,7 +135,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             Buffer.BlockCopy(encryptedData, 8 + nonceSize, cipherDataAndTag, 0, cipherDataAndTagSize);
             // decrypt
             await using var ret = await SubtleCrypto.Decrypt(new AesGcmParams { Iv = nonce, TagLength = tagSize * 8 }, jsKey!.Key, cipherDataAndTag);
-            var plainData = await ArrayBufferToBytes(ret);
+            var plainData = await ret.ReadBytes();
             return plainData;
         }
     }
