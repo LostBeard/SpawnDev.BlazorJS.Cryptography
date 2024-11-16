@@ -22,14 +22,9 @@
     
 </div>
 
-<UnitTestsView TypeInstanceResolver="TestTypeResolver" TestAssemblies="Assemblies" TestTypes="Types"></UnitTestsView>
+<SpawnDev.Blazor.UnitTesting.UnitTestsView TypeInstanceResolver="TestTypeResolver" TestAssemblies="Assemblies" TestTypes="Types"></SpawnDev.Blazor.UnitTesting.UnitTestsView>
 
 @code {
-    [Inject]
-    BlazorJSRuntimeAsync JSA { get; set; }
-
-    [Inject]
-    BlazorJSRuntime JS { get; set; }
 
     [Inject]
     BrowserCrypto BrowserCrypto { get; set; }

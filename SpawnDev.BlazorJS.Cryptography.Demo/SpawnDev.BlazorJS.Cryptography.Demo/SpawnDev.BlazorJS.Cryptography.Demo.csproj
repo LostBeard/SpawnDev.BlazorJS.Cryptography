@@ -9,6 +9,11 @@
 	<ItemGroup>
 		<ProjectReference Include="..\SpawnDev.BlazorJS.Cryptography.Demo.Client\SpawnDev.BlazorJS.Cryptography.Demo.Client.csproj" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.11" />
+		<PackageReference Include="SpawnDev.Blazor.UnitTesting" Version="2.0.3" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\..\SpawnDev.BlazorJS.Cryptography\SpawnDev.BlazorJS.Cryptography.csproj" />
+	</ItemGroup>
+	
 </Project>

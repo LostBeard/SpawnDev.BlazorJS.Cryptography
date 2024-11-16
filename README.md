@@ -49,7 +49,8 @@ builder.Services.AddSingleton<DotNetCrypto>();
 #### Blazor Server Project
 Blazor Server Program.cs
 ```cs
-// Add BlazorJSRuntime service (pre-req)
+
+// Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();
 
 // Crypto for the server. Uses System.Security.Cryptography.
@@ -63,7 +64,7 @@ builder.Services.AddScoped<BrowserCrypto>();
 #### Blazor WebAssembly
 WebAssembly Program.cs 
 ```cs
-// Add BlazorJSRuntime service (pre-req)
+// Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();
 
 // Crypto for the browser. Uses the browser's SubtleCrypto API.
