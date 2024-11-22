@@ -2,7 +2,7 @@
 
 namespace SpawnDev.BlazorJS.Cryptography
 {
-    public abstract class PortableCrypto
+    public abstract class PortableCrypto : IPortableCrypto
     {
         public abstract Task<byte[]> Decrypt(PortableAESGCMKey key, byte[] encryptedData);
         public abstract Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey);
