@@ -4,7 +4,7 @@
 		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<Version>2.0.5</Version>
+		<Version>2.0.6</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<EmbedAllSources>true</EmbedAllSources>
@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="SpawnDev.BlazorJS" Version="2.5.21" />
+	  <PackageReference Include="SpawnDev.BlazorJS" Version="2.5.30" />
 	</ItemGroup>
 
 </Project>
