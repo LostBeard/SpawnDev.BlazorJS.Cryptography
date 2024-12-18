@@ -90,7 +90,6 @@ namespace SpawnDev.BlazorJS.Cryptography
         {
             var key = ECDiffieHellman.Create();
             key.ImportPkcs8PrivateKey(privateKeyPkcs8, out _);
-            key.ImportSubjectPublicKeyInfo(publicKeySpki, out _);
             return new DotNetECDHKey(key);
         }
         /// <summary>
