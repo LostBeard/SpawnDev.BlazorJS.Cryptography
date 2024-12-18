@@ -1,4 +1,4 @@
-﻿
+﻿#if NET6_0_OR_GREATER
 using SpawnDev.BlazorJS.JSObjects;
 using System.Runtime.Versioning;
 
@@ -25,3 +25,4 @@ namespace SpawnDev.BlazorJS.Cryptography
         }
     }
 }
+#endif
