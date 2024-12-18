@@ -58,7 +58,7 @@
     static string DefaultNamedCurve = "P-521";
     // ************************************ Digest ************************************
     [TestMethod]
-    public async Task SHATest()
+    public async Task SHA512Test()
     {
         // ******************** SHA ********************
         // - Server
@@ -133,17 +133,17 @@
         }
     }
     [TestMethod]
-    public async Task ECDSASignAndVerify()
+    public async Task ECDSAServerSignBrowserVerify()
     {
-        // Test server signs and browser verifies
         await _ECDSASignAndVerify(DotNetCrypto, BrowserCrypto);
-
-        // Test browser signs and server verifies
+    }
+    [TestMethod]
+    public async Task ECDSABrowserSignServerVerify()
+    {
         await _ECDSASignAndVerify(BrowserCrypto, DotNetCrypto);
     }
     public async Task _ECDSASignAndVerify(IPortableCrypto signerCrypto, IPortableCrypto verifierCrypto)
     {
-        // ******************** ECDH ********************
         // - signerCrypto
         // generate signerCrypto ECDSA key
         using var ecdsaD = await signerCrypto.GenerateECDSAKey("P-521");
