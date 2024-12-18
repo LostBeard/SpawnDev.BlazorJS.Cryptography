@@ -1,7 +1,6 @@
 ﻿
 using SpawnDev.BlazorJS.Cryptography.Browser;
 using SpawnDev.BlazorJS.JSObjects;
-using SpawnDev.BlazorJS.RemoteJSRuntime;
 using SpawnDev.BlazorJS.RemoteJSRuntime.AsyncObjects;
 
 namespace SpawnDev.BlazorJS.Cryptography
@@ -57,11 +56,11 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <exception cref="NotImplementedException"></exception>
         public override async Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, string namedCurve = NamedCurve.P521, bool extractable = true)
         {
-            var keyUsages = new string[] { };
-            await using var publicKey = await SubtleCrypto!.ImportKey("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
+            var keyUsagesPublicKey = new string[] { "verify" };
+            await using var publicKey = await SubtleCrypto!.ImportKey("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsagesPublicKey);
             var key = await CryptoKeyPairAsync.New(JSA);
             await key.Set_PublicKey(publicKey);
-            return new BrowserECDSAKey(key, namedCurve, extractable, keyUsages);
+            return new BrowserECDSAKey(key, namedCurve, extractable, keyUsagesPublicKey);
         }
         /// <summary>
         /// Import an ECDSA public and private key
@@ -74,13 +73,14 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <exception cref="NotImplementedException"></exception>
         public override async Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, byte[] privateKeyPkcs8Data, string namedCurve = NamedCurve.P521, bool extractable = true)
         {
-            var keyUsages = new string[] { "deriveBits", "deriveKey" };
-            await using var privateKey = await SubtleCrypto!.ImportKey("pkcs8", privateKeyPkcs8Data, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsages);
-            await using var publicKey = await SubtleCrypto!.ImportKey("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, new string[] { });
+            var keyUsagesPrivateKey = new string[] { "sign" };
+            var keyUsagesPublicKey = new string[] { "verify" };
+            await using var privateKey = await SubtleCrypto!.ImportKey("pkcs8", privateKeyPkcs8Data, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsagesPrivateKey);
+            await using var publicKey = await SubtleCrypto!.ImportKey("spki", publicKeySpkiData, new EcKeyImportParams { Name = Algorithm.ECDSA, NamedCurve = namedCurve }, extractable, keyUsagesPublicKey);
             var key = await CryptoKeyPairAsync.New(JSA);
             await key.Set_PublicKey(publicKey);
             await key.Set_PrivateKey(privateKey);
-            return new BrowserECDSAKey(key, namedCurve, extractable, keyUsages);
+            return new BrowserECDSAKey(key, namedCurve, extractable, keyUsagesPublicKey.Concat(keyUsagesPrivateKey).ToArray());
         }
         /// <summary>
         /// Verify a data signature
