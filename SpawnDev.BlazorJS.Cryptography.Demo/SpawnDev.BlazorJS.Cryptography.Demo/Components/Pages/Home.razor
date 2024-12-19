@@ -13,7 +13,7 @@
 <div>
     <ul>
         <li>
-            DotNetCrypto service runs on the server and uses the Microsoft.Security.Cryptography library.
+            DotNetCrypto service runs on the server and uses the System.Security.Cryptography base class library.
         </li>
         <li>
             BrowserCrypto service runs on the web browser and uses the browser's SubtleCrypto API.<br />
@@ -146,20 +146,20 @@
     {
         // - signerCrypto
         // generate signerCrypto ECDSA key
-        using var ecdsaD = await signerCrypto.GenerateECDSAKey("P-521");
+        using var ecdsaKey = await signerCrypto.GenerateECDSAKey("P-521");
 
         // export ecdsaD public key for verifierCrypto to use
-        var ecdsaDPublicKeyBytes = await signerCrypto.ExportPublicKeySpki(ecdsaD);
+        var ecdsaPublicKeyBytes = await signerCrypto.ExportPublicKeySpki(ecdsaKey);
 
         // sign test message data
-        var signature = await signerCrypto.Sign(ecdsaD, TestMessageBytes, "SHA-512");
+        var signature = await signerCrypto.Sign(ecdsaKey, TestMessageBytes, "SHA-512");
 
         // - verifierCrypto
         // import the signerCrypto's ECDSA public key using verifierCrypto so verifierCrypto can work with it
-        using var ecdsaDPublicKeyB = await verifierCrypto.ImportECDSAKey(ecdsaDPublicKeyBytes, "P-521");
+        using var ecdsaPublicKeyImported = await verifierCrypto.ImportECDSAKey(ecdsaPublicKeyBytes, "P-521");
 
         // verify signature
-        var verified = await verifierCrypto.Verify(ecdsaDPublicKeyB, TestMessageBytes, signature, "SHA-512");
+        var verified = await verifierCrypto.Verify(ecdsaPublicKeyImported, TestMessageBytes, signature, "SHA-512");
         if (!verified)
         {
             throw new Exception("Signature verification failed");

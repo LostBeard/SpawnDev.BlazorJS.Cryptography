@@ -3,6 +3,7 @@
 @using SpawnDev.BlazorJS.RemoteJSRuntime
 @using SpawnDev.Blazor.UnitTesting
 @using System.Reflection
+@using System.Text
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 <PageTitle>Home</PageTitle>
@@ -26,6 +27,7 @@
 <UnitTestsView TypeInstanceResolver="TestTypeResolver" TestAssemblies="Assemblies" TestTypes="Types"></UnitTestsView>
 
 @code {
+
     [Inject]
     BrowserCrypto BrowserCrypto { get; set; }
 
@@ -37,6 +39,9 @@
 
     List<Assembly>? Assemblies = new List<Assembly>();
     List<Type>? Types = new List<Type>();
+
+    static string TestMessage = "Hello world!";
+    byte[] TestMessageBytes = Encoding.UTF8.GetBytes(TestMessage);
 
     protected override void OnInitialized()
     {
@@ -51,18 +56,18 @@
         }
         catch { }
     }
+    static string DefaultNamedCurve = "P-521";
+    // ************************************ Digest ************************************
     [TestMethod]
-    public async Task SHATest()
+    public async Task SHA512Test()
     {
-        var data = new byte[] { 0, 1, 2 };
-        // ******************** SHA ********************
-        // - Server
-        // DotNetCrypto indicated by the appended D, executes on the server using Microsoft.Security.Cryptography
-        var hashD = await BrowserWASMCrypto.Digest("SHA-512", data);
+        // - BrowserWASM
+        // BrowserWASMCrypto indicated by the appended D, executes on the browser using Javascript's SubtleCrypto APIs
+        var hashD = await BrowserWASMCrypto.Digest("SHA-512", TestMessageBytes);
 
         // - Browser
         // BrowserCrypto indicated by the appended B, executes on the browser using Javascript's SubtleCrypto APIs
-        var hashB = await BrowserCrypto.Digest("SHA-512", data);
+        var hashB = await BrowserCrypto.Digest("SHA-512", TestMessageBytes);
 
         // verify the hashes match
         if (!hashB.SequenceEqual(hashD))
@@ -70,31 +75,54 @@
             throw new Exception("Hash mismatch");
         }
     }
+    // ************************************ Generate, Export, Import ************************************
+    // Below tests generate keys on one system, exports them, and then imports them on the other system.
+    [TestMethod]
+    public async Task ECDHBrowserWASMGenerateExportBrowserImportTest()
+    {
+        await _ECDHGenerateExportImportTest(BrowserWASMCrypto, BrowserCrypto);
+    }
+    [TestMethod]
+    public async Task ECDHBrowserGenerateExportBrowserWASMImportTest()
+    {
+        await _ECDHGenerateExportImportTest(BrowserCrypto, BrowserWASMCrypto);
+    }
+    [TestMethod]
+    public async Task ECDSABrowserWASMGenerateExportBrowserImportTest()
+    {
+        await _ECDSAGenerateExportImportTest(BrowserWASMCrypto, BrowserCrypto);
+    }
+    [TestMethod]
+    public async Task ECDSABrowserGenerateExportBrowserWASMImportTest()
+    {
+        await _ECDSAGenerateExportImportTest(BrowserCrypto, BrowserWASMCrypto);
+    }
+    // ************************************************************************
     [TestMethod]
     public async Task ECDHGenerateExportImportSharedSecretTest()
     {
         // ******************** ECDH ********************
-        // - Server
-        // generate server ECDH key
-        var ecdhD = await BrowserWASMCrypto.GenerateECDHKey();
+        // - BrowserWASM
+        // generate browser ECDH key
+        using var ecdhD = await BrowserWASMCrypto.GenerateECDHKey("P-521");
         // export ecdhD public key for browser to use
         var ecdhDPublicKeyBytes = await BrowserWASMCrypto.ExportPublicKeySpki(ecdhD);
 
         // - Browser
         // generate browser ECDH key
-        var ecdhB = await BrowserCrypto.GenerateECDHKey();
-        // export ecdhB public key for server to use
+        using var ecdhB = await BrowserCrypto.GenerateECDHKey("P-521");
+        // export ecdhB public key for browser to use
         var ecdhBPublicKeyBytes = await BrowserCrypto.ExportPublicKeySpki(ecdhB);
 
-        // - Server
-        // import the browser's ECDH public key using DotNetCrypto so DotNetCrypto can work with it
-        var ecdhBPublicKeyD = await BrowserWASMCrypto.ImportECDHKey(ecdhBPublicKeyBytes);
+        // - BrowserWASM
+        // import the browser's ECDH public key using BrowserWASMCrypto so BrowserWASMCrypto can work with it
+        using var ecdhBPublicKeyD = await BrowserWASMCrypto.ImportECDHKey(ecdhBPublicKeyBytes, "P-521");
         // create shared secret
         var sharedSecretD = await BrowserWASMCrypto.DeriveBits(ecdhD, ecdhBPublicKeyD);
 
         // - Browser
-        // import the server's ECDH public key using BrowserCrypto so BrowserCrypto can work with it
-        var ecdhDPublicKeyB = await BrowserCrypto.ImportECDHKey(ecdhDPublicKeyBytes);
+        // import the browser's ECDH public key using BrowserCrypto so BrowserCrypto can work with it
+        using var ecdhDPublicKeyB = await BrowserCrypto.ImportECDHKey(ecdhDPublicKeyBytes, "P-521");
         // create shared secret
         var sharedSecretB = await BrowserCrypto.DeriveBits(ecdhB, ecdhDPublicKeyB);
 
@@ -102,6 +130,100 @@
         if (!sharedSecretB.SequenceEqual(sharedSecretD))
         {
             throw new Exception("Shared secret mismatch");
+        }
+    }
+    [TestMethod]
+    public async Task ECDSABrowserWASMSignBrowserVerify()
+    {
+        await _ECDSASignAndVerify(BrowserWASMCrypto, BrowserCrypto);
+    }
+    [TestMethod]
+    public async Task ECDSABrowserSignBrowserWASMVerify()
+    {
+        await _ECDSASignAndVerify(BrowserCrypto, BrowserWASMCrypto);
+    }
+    public async Task _ECDSASignAndVerify(IPortableCrypto signerCrypto, IPortableCrypto verifierCrypto)
+    {
+        // - signerCrypto
+        // generate signerCrypto ECDSA key
+        using var ecdsaKey = await signerCrypto.GenerateECDSAKey("P-521");
+
+        // export ecdsaD public key for verifierCrypto to use
+        var ecdsaPublicKeyBytes = await signerCrypto.ExportPublicKeySpki(ecdsaKey);
+
+        // sign test message data
+        var signature = await signerCrypto.Sign(ecdsaKey, TestMessageBytes, "SHA-512");
+
+        // - verifierCrypto
+        // import the signerCrypto's ECDSA public key using verifierCrypto so verifierCrypto can work with it
+        using var ecdsaPublicKeyImported = await verifierCrypto.ImportECDSAKey(ecdsaPublicKeyBytes, "P-521");
+
+        // verify signature
+        var verified = await verifierCrypto.Verify(ecdsaPublicKeyImported, TestMessageBytes, signature, "SHA-512");
+        if (!verified)
+        {
+            throw new Exception("Signature verification failed");
+        }
+    }
+    public async Task _ECDHGenerateExportImportTest(IPortableCrypto keyGeneratorExporter, IPortableCrypto keyImporter)
+    {
+        // generate ECDH key
+        using var ecdhKey = await keyGeneratorExporter.GenerateECDHKey("P-521");
+        // export ecdh public key
+        var ecdhPublicKeyBytes = await keyGeneratorExporter.ExportPublicKeySpki(ecdhKey);
+        // export ecdh private key
+        var ecdhPrivateKeyBytes = await keyGeneratorExporter.ExportPrivateKeyPkcs8(ecdhKey);
+        // import the ECDH public and private keys
+        using var ecdhKeyImported = await keyImporter.ImportECDHKey(ecdhPublicKeyBytes, ecdhPrivateKeyBytes, "P-521");
+
+        // test the imported key
+        // currently done by exporting the imported key to see if the exported bytes are the same
+
+        // export ecdh public key
+        var ecdhImportedPublicKeyBytes = await keyImporter.ExportPublicKeySpki(ecdhKeyImported);
+        if (!ecdhImportedPublicKeyBytes.SequenceEqual(ecdhPublicKeyBytes))
+        {
+            throw new Exception("Exported public keys do not match");
+        }
+        // export ecdh private key
+        try
+        {
+            var ecdhImportedPrivateKeyBytes = await keyImporter.ExportPrivateKeyPkcs8(ecdhKeyImported);
+            if (!ecdhImportedPrivateKeyBytes.SequenceEqual(ecdhPrivateKeyBytes))
+            {
+                throw new Exception("Exported private keys do not match");
+            }
+        }
+        catch (Exception ex)
+        {
+            var nmt = true;
+        }
+    }
+    public async Task _ECDSAGenerateExportImportTest(IPortableCrypto keyGeneratorExporter, IPortableCrypto keyImporter)
+    {
+        // generate ECDSA key
+        using var ecdsaKey = await keyGeneratorExporter.GenerateECDSAKey("P-521");
+
+        // export ecdsa public key
+        var ecdsaPublicKeyBytes = await keyGeneratorExporter.ExportPublicKeySpki(ecdsaKey);
+
+        // export ecdsa private key
+        var ecdsaPrivateKeyBytes = await keyGeneratorExporter.ExportPrivateKeyPkcs8(ecdsaKey);
+
+        // import the ECDSA public and private keys
+        using var ecdsaKeyImported = await keyImporter.ImportECDSAKey(ecdsaPublicKeyBytes, ecdsaPrivateKeyBytes, "P-521");
+
+        // test the imported key
+        // currently done by signing and verifying
+
+        // sign test message data
+        var signature = await keyImporter.Sign(ecdsaKeyImported, TestMessageBytes, "SHA-512");
+
+        // verify signature
+        var verified = await keyImporter.Verify(ecdsaKeyImported, TestMessageBytes, signature, "SHA-512");
+        if (!verified)
+        {
+            throw new Exception("Signature verification failed");
         }
     }
 }
