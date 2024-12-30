@@ -1,9 +1,12 @@
 using SpawnDev.BlazorJS;
 using SpawnDev.BlazorJS.Cryptography;
-using SpawnDev.BlazorJS.Cryptography.DemoLinux.Client.Pages;
 using SpawnDev.BlazorJS.Cryptography.DemoLinux.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), AppDomain.CurrentDomain.FriendlyName.Split(".").Last());
+Console.WriteLine($"AppDataPath: {appDataPath}");
+if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
 
 // Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();

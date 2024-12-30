@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptogra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.DemoLinux.Client", "SpawnDev.BlazorJS.Cryptography.DemoLinux\SpawnDev.BlazorJS.Cryptography.DemoLinux.Client\SpawnDev.BlazorJS.Cryptography.DemoLinux.Client.csproj", "{2099FE7A-79CE-4D24-95A1-1A7934B00054}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.Net4", "SpawnDev.BlazorJS.Cryptography.Net4\SpawnDev.BlazorJS.Cryptography.Net4.csproj", "{78975F3A-51A0-4296-9BB0-DC78E966311D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetFrameworkTest", "DotNetFrameworkTest\DotNetFrameworkTest.csproj", "{C9600A00-EB07-4BDD-9410-643F06487BCC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9600A00-EB07-4BDD-9410-643F06487BCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9600A00-EB07-4BDD-9410-643F06487BCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9600A00-EB07-4BDD-9410-643F06487BCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9600A00-EB07-4BDD-9410-643F06487BCC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
