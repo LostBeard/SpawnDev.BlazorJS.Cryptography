@@ -226,4 +226,44 @@
             throw new Exception("Signature verification failed");
         }
     }
+
+    [TestMethod]
+    public async Task AESCBCBrowserTest()
+    {
+        using var key = await BrowserCrypto.GenerateAESCBCKey(256);
+        var encrypted = await BrowserCrypto.Encrypt(key, TestMessageBytes);
+        var decrypted = await BrowserCrypto.Decrypt(key, encrypted);
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+        {
+            throw new Exception("AES CBC encryption/decryption failed");
+        }
+    }
+
+    [TestMethod]
+    public async Task AESCBCDotNetTest()
+    {
+        using var key = await DotNetCrypto.GenerateAESCBCKey(256);
+        var encrypted = await DotNetCrypto.Encrypt(key, TestMessageBytes);
+        var decrypted = await DotNetCrypto.Decrypt(key, encrypted);
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+        {
+            throw new Exception("AES CBC encryption/decryption failed");
+        }
+    }
+
+    [TestMethod]
+    public async Task AESCBCBrowserEncryptDotNetDecryptTest()
+    {
+        using var key = await BrowserCrypto.GenerateAESCBCKey(256);
+        var encrypted = await BrowserCrypto.Encrypt(key, TestMessageBytes);
+        // export browser AES-CBC key to byte array
+        var rawKey = await BrowserCrypto.ExportAESCBCKey(key);
+        // import AES-CBC key byte array in dotnet
+        using var dnKey = await DotNetCrypto.ImportAESCBCKey(rawKey);
+        var decrypted = await DotNetCrypto.Decrypt(dnKey, encrypted);
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+        {
+            throw new Exception("AES CBC encryption/decryption failed");
+        }
+    }
 }
