@@ -2,30 +2,43 @@
 
 namespace SpawnDev.BlazorJS.Cryptography
 {
-    public abstract class PortableCrypto : IPortableCrypto
+    public abstract partial class PortableCrypto : IPortableCrypto
     {
-        public abstract Task<byte[]> Decrypt(PortableAESGCMKey key, byte[] encryptedData);
-        public abstract Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey);
-        public abstract Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey, int bitLength);
+        // Digest
         public abstract Task<byte[]> Digest(string hashName, byte[] data);
+        // AES-GCM
+        public abstract Task<byte[]> Decrypt(PortableAESGCMKey key, byte[] encryptedData);
         public abstract Task<byte[]> Encrypt(PortableAESGCMKey key, byte[] plainBytes);
-        public abstract Task<byte[]> ExportPrivateKeyPkcs8(PortableECDHKey key);
-        public abstract Task<byte[]> ExportPrivateKeyPkcs8(PortableECDSAKey key);
-        public abstract Task<byte[]> ExportPublicKeySpki(PortableECDHKey key);
-        public abstract Task<byte[]> ExportPublicKeySpki(PortableECDSAKey key);
         public abstract Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, int iterations = 25000, string hashName = "SHA-256", int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true);
         public abstract Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, byte[] salt, int iterations = 25000, string hashName = "SHA-256", int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true);
+        // AES-CBC
+        public abstract Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData);
+        public abstract Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv);
+        public abstract Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV);
+        public abstract Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV);
+        public abstract Task<PortableAESCBCKey> GenerateAESCBCKey(int keySize, bool extractable = true);
+        public abstract Task<PortableAESCBCKey> ImportAESCBCKey(byte[] rawKey, bool extractable = true);
+        public abstract Task<byte[]> ExportAESCBCKey(PortableAESCBCKey key);
+        // ECDH
+        public abstract Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey);
+        public abstract Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey, int bitLength);
+        public abstract Task<byte[]> ExportPrivateKeyPkcs8(PortableECDHKey key);
+        public abstract Task<byte[]> ExportPublicKeySpki(PortableECDHKey key);
         public abstract Task<PortableECDHKey> GenerateECDHKey(string namedCurve = "P-521", bool extractable = true);
-        public abstract Task<PortableECDSAKey> GenerateECDSAKey(string namedCurve = "P-521", bool extractable = true);
         public abstract Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, string namedCurve = "P-521", bool extractable = true);
         public abstract Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, byte[] privateKeyPkcs8, string namedCurve = "P-521", bool extractable = true);
+        // ECDSA
+        public abstract Task<byte[]> ExportPrivateKeyPkcs8(PortableECDSAKey key);
+        public abstract Task<byte[]> ExportPublicKeySpki(PortableECDSAKey key);
+        public abstract Task<PortableECDSAKey> GenerateECDSAKey(string namedCurve = "P-521", bool extractable = true);
         public abstract Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, string namedCurve = "P-521", bool extractable = true);
         public abstract Task<PortableECDSAKey> ImportECDSAKey(byte[] publicKeySpkiData, byte[] privateKeyPkcs8Data, string namedCurve = "P-521", bool extractable = true);
+        public abstract Task<byte[]> Sign(PortableECDSAKey key, byte[] data, string hashName = "SHA-512");
+        public abstract Task<bool> Verify(PortableECDSAKey key, byte[] data, byte[] signature, string hashName = "SHA-512");
+        // Random
         public abstract byte[] RandomBytes(int length);
         public abstract void RandomBytesFill(byte[] data);
         public abstract void RandomBytesFill(Span<byte> data);
-        public abstract Task<byte[]> Sign(PortableECDSAKey key, byte[] data, string hashName = "SHA-512");
-        public abstract Task<bool> Verify(PortableECDSAKey key, byte[] data, byte[] signature, string hashName = "SHA-512");
 
         /// <summary>
         /// EC named curves
@@ -37,13 +50,17 @@ namespace SpawnDev.BlazorJS.Cryptography
             /// </summary>
             public const string ECDSA = "ECDSA";
             /// <summary>
-            /// P-384
+            /// ECDH
             /// </summary>
             public const string ECDH = "ECDH";
             /// <summary>
-            /// P-256
+            /// AES-GCM
             /// </summary>
             public const string AESGCM = "AES-GCM";
+            /// <summary>
+            /// AES-CBC
+            /// </summary>
+            public const string AESCBC = "AES-CBC";
         }
         /// <summary>
         /// EC named curves
