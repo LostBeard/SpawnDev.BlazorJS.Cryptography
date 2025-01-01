@@ -26,15 +26,14 @@
 <SpawnDev.Blazor.UnitTesting.UnitTestsView TypeInstanceResolver="TestTypeResolver" TestAssemblies="Assemblies" TestTypes="Types"></SpawnDev.Blazor.UnitTesting.UnitTestsView>
 
 @code {
+    [Inject]
+    BrowserCrypto BrowserCrypto { get; set; } = default!;
 
     [Inject]
-    BrowserCrypto BrowserCrypto { get; set; }
+    DotNetCrypto DotNetCrypto { get; set; } = default!;
 
     [Inject]
-    DotNetCrypto DotNetCrypto { get; set; }
-
-    [Inject]
-    IJSRuntime JSR { get; set; }
+    IJSRuntime JSR { get; set; } = default!;
 
     List<Assembly>? Assemblies = new List<Assembly>();
     List<Type>? Types = new List<Type>();

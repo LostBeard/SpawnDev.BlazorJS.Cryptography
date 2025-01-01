@@ -19,7 +19,6 @@ namespace SpawnDev.BlazorJS.Cryptography.DotNet
         /// Creates a new instance
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="keySize"></param>
         public DotNetAESCBCKey(Aes key)
         {
             Key = key;

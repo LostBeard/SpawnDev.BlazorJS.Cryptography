@@ -5,16 +5,31 @@ namespace SpawnDev.BlazorJS.Cryptography
 {
     public partial class DotNetCrypto
     {
-
-        public override async Task<PortableAESCBCKey> GenerateAESCBCKey(int keySize, bool extractable = true)
+        /// <summary>
+        /// Generate an AES-CBC key
+        /// </summary>
+        /// <param name="keySize"></param>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        public override Task<PortableAESCBCKey> GenerateAESCBCKey(int keySize, bool extractable = true)
         {
             var aes = Aes.Create();
             aes.Mode = CipherMode.CBC;
             aes.Padding = PaddingMode.PKCS7;
             aes.KeySize = keySize;
             aes.GenerateKey();
-            return new DotNetAESCBCKey(aes);
+            return Task.FromResult<PortableAESCBCKey>(new DotNetAESCBCKey(aes));
         }
+        /// <summary>
+        /// Encrypt data using an AES-CBC key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="plainBytes"></param>
+        /// <param name="iv"></param>
+        /// <param name="prependIV"></param>
+        /// <param name="padding"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public override Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV = false, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             if (key is not DotNetAESCBCKey nKey) throw new NotImplementedException();
@@ -43,11 +58,28 @@ namespace SpawnDev.BlazorJS.Cryptography
             encryptedData.CopyTo(result, iv.Length);
             return Task.FromResult(result);
         }
+        /// <summary>
+        /// Encrypt data using an AES-CBC key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="plainBytes"></param>
+        /// <param name="prependIV"></param>
+        /// <param name="padding"></param>
+        /// <returns></returns>
         public override Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV = true, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             var iv = RandomBytes(16);
             return Encrypt(key, plainBytes, iv, prependIV, padding);
         }
+        /// <summary>
+        /// Encrypt data using an AES-CBC key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="encryptedData"></param>
+        /// <param name="iv"></param>
+        /// <param name="padding"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public override Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             if (key is not DotNetAESCBCKey nKey) throw new NotImplementedException();
@@ -71,6 +103,13 @@ namespace SpawnDev.BlazorJS.Cryptography
             var data = msDecrypt.ToArray();
             return Task.FromResult(data);
         }
+        /// <summary>
+        /// Decrypt data using an AES-CBC key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="encryptedData"></param>
+        /// <param name="padding"></param>
+        /// <returns></returns>
         public override Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             var iv = new byte[16];
@@ -79,18 +118,30 @@ namespace SpawnDev.BlazorJS.Cryptography
             Buffer.BlockCopy(encryptedData, 16, encrypted, 0, encrypted.Length);
             return Decrypt(key, encrypted, iv, padding);
         }
-        public override async Task<PortableAESCBCKey> ImportAESCBCKey(byte[] rawKey, bool extractable = true)
+        /// <summary>
+        /// Decrypt data using an AES-CBC key
+        /// </summary>
+        /// <param name="rawKey"></param>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        public override Task<PortableAESCBCKey> ImportAESCBCKey(byte[] rawKey, bool extractable = true)
         {
             var key = Aes.Create();
             key.Key = rawKey;
             key.Padding = PaddingMode.PKCS7;
             key.Mode = CipherMode.CBC;
-            return new DotNetAESCBCKey(key);
+            return Task.FromResult<PortableAESCBCKey>(new DotNetAESCBCKey(key));
         }
-        public override async Task<byte[]> ExportAESCBCKey(PortableAESCBCKey key)
+        /// <summary>
+        /// Export an AES-CBC key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public override Task<byte[]> ExportAESCBCKey(PortableAESCBCKey key)
         {
             if (key is not DotNetAESCBCKey nKey) throw new NotImplementedException();
-            return nKey.Key.Key;
+            return Task.FromResult(nKey.Key.Key);
         }
     }
 }

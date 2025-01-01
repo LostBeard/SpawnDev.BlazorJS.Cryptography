@@ -19,11 +19,11 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="extractable"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<PortableECDHKey> GenerateECDHKey(string namedCurve = NamedCurve.P521, bool extractable = true)
+        public override Task<PortableECDHKey> GenerateECDHKey(string namedCurve = NamedCurve.P521, bool extractable = true)
         {
             var eccurve = NamedCurveToECCurve(namedCurve);
             var key = ECDiffieHellman.Create(eccurve);
-            return new DotNetECDHKey(key);
+            return Task.FromResult<PortableECDHKey>(new DotNetECDHKey(key));
         }
         /// <summary>
         /// Exports the public key in Spki format
@@ -31,13 +31,10 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="key"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<byte[]> ExportPublicKeySpki(PortableECDHKey key)
+        public override Task<byte[]> ExportPublicKeySpki(PortableECDHKey key)
         {
-            if (key is DotNetECDHKey keyNet)
-            {
-                return keyNet.Key.ExportSubjectPublicKeyInfo();
-            }
-            throw new NotImplementedException();
+            if (key is not DotNetECDHKey keyNet) throw new NotImplementedException();
+            return Task.FromResult(keyNet.Key.ExportSubjectPublicKeyInfo());
         }
         /// <summary>
         /// Exports the private key in Pkcs8 format
@@ -45,13 +42,10 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="key"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<byte[]> ExportPrivateKeyPkcs8(PortableECDHKey key)
+        public override Task<byte[]> ExportPrivateKeyPkcs8(PortableECDHKey key)
         {
-            if (key is DotNetECDHKey keyNet)
-            {
-                return keyNet.Key.ExportPkcs8PrivateKey();
-            }
-            throw new NotImplementedException();
+            if (key is not DotNetECDHKey keyNet) throw new NotImplementedException();
+            return Task.FromResult(keyNet.Key.ExportPkcs8PrivateKey());
         }
         /// <summary>
         /// Import an ECDH public key
@@ -66,11 +60,11 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="extractable"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, string namedCurve = NamedCurve.P521, bool extractable = true)
+        public override Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, string namedCurve = NamedCurve.P521, bool extractable = true)
         {
             var key = ECDiffieHellman.Create();
             key.ImportSubjectPublicKeyInfo(publicKeySpki, out _);
-            return new DotNetECDHKey(key);
+            return Task.FromResult<PortableECDHKey>(new DotNetECDHKey(key));
         }
         /// <summary>
         /// Import an ECDH public and private key
@@ -86,11 +80,11 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="extractable"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, byte[] privateKeyPkcs8, string namedCurve = NamedCurve.P521, bool extractable = true)
+        public override Task<PortableECDHKey> ImportECDHKey(byte[] publicKeySpki, byte[] privateKeyPkcs8, string namedCurve = NamedCurve.P521, bool extractable = true)
         {
             var key = ECDiffieHellman.Create();
             key.ImportPkcs8PrivateKey(privateKeyPkcs8, out _);
-            return new DotNetECDHKey(key);
+            return Task.FromResult<PortableECDHKey>(new DotNetECDHKey(key));
         }
         /// <summary>
         /// Creates a shared secret that is cross-platform compatible
@@ -103,7 +97,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey, int bitLength)
+        public override Task<byte[]> DeriveBits(PortableECDHKey localPartyKey, PortableECDHKey otherPartyKey, int bitLength)
         {
             if (localPartyKey is not DotNetECDHKey localPartyKeyNet) throw new NotImplementedException();
             if (otherPartyKey is not DotNetECDHKey otherPartyKeyNet) throw new NotImplementedException();
@@ -114,8 +108,8 @@ namespace SpawnDev.BlazorJS.Cryptography
             var retBitLength = ret.Length * 8;
             if (retBitLength < bitLength) throw new Exception($"Requested {bitLength} exceeds the max bitLength {retBitLength}");
             var requestedByteLength = (int)Math.Ceiling(bitLength / 8d);
-            if (requestedByteLength == retBitLength) return ret;
-            return ret[..requestedByteLength];
+            if (requestedByteLength == retBitLength) return Task.FromResult(ret);
+            return Task.FromResult(ret[..requestedByteLength]);
         }
         /// <summary>
         /// Creates a shared secret that is cross-platform compatible

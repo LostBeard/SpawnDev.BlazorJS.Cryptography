@@ -9,6 +9,9 @@ namespace SpawnDev.BlazorJS.Cryptography
     /// </summary>
     public partial class BrowserCrypto : PortableCrypto
     {
+        /// <summary>
+        /// The JS runtime
+        /// </summary>
         protected IJSRuntime JSA { get; set; }
         SubtleCryptoAsync SubtleCrypto { get; }
         /// <summary>

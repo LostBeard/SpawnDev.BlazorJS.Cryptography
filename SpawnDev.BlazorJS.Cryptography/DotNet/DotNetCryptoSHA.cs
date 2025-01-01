@@ -11,29 +11,29 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="data"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<byte[]> Digest(string hashName, byte[] data)
+        public override Task<byte[]> Digest(string hashName, byte[] data)
         {
             switch (hashName)
             {
                 case HashName.SHA256:
                     {
                         using var sha = SHA256.Create();
-                        return sha.ComputeHash(data);
+                        return Task.FromResult(sha.ComputeHash(data));
                     }
                 case HashName.SHA384:
                     {
                         using var sha = SHA384.Create();
-                        return sha.ComputeHash(data);
+                        return Task.FromResult(sha.ComputeHash(data));
                     }
                 case HashName.SHA512:
                     {
                         using var sha = SHA512.Create();
-                        return sha.ComputeHash(data);
+                        return Task.FromResult(sha.ComputeHash(data));
                     }
                 case HashName.SHA1:
                     {
                         using var sha = SHA1.Create();
-                        return sha.ComputeHash(data);
+                        return Task.FromResult(sha.ComputeHash(data));
                     }
             }
             throw new NotImplementedException($"Digest failed: {hashName} hash algorithm not supported");

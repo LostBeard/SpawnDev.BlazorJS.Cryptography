@@ -52,13 +52,13 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="extractable">A boolean value indicating whether it will be possible to export the key (a value of false is supported in the Browser environment only)</param>
         /// <returns>PortableAESGCMKey</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, byte[] salt, int iterations = 25000, string hashName = HashName.SHA256, int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true)
+        public override Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, byte[] salt, int iterations = 25000, string hashName = HashName.SHA256, int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true)
         {
             var hashAlgorithm = HashNameToHashAlgorithmName(hashName);
             // get encrypted message and decrypt using shared secret
             using var pbkdf2 = new Rfc2898DeriveBytes(secret, salt, iterations, hashAlgorithm);
             var key = new AesGcm(pbkdf2.GetBytes(keySizeBytes), tagSizeBytes);
-            return new DotNetAESGCMKey(key, nonceSizeBytes);
+            return Task.FromResult<PortableAESGCMKey>(new DotNetAESGCMKey(key, nonceSizeBytes));
         }
         /// <summary>
         /// Encrypt data using an AES-GCM key
@@ -67,7 +67,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="plainBytes"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<byte[]> Encrypt(PortableAESGCMKey key, byte[] plainBytes)
+        public override Task<byte[]> Encrypt(PortableAESGCMKey key, byte[] plainBytes)
         {
             if (key is not DotNetAESGCMKey keyNet) throw new NotImplementedException();
             var tagSize = key.TagSizeBytes;
@@ -92,7 +92,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             cipherData.CopyTo(encryptedData, 8 + nonceSize);
             // + tag
             tag.CopyTo(encryptedData, 4 + nonceSize + 4 + cipherDataSize);
-            return encryptedData;
+            return Task.FromResult(encryptedData);
         }
         /// <summary>
         /// Decrypt data using an AES-GCM key
@@ -101,7 +101,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="encryptedData"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task<byte[]> Decrypt(PortableAESGCMKey key, byte[] encryptedData)
+        public override Task<byte[]> Decrypt(PortableAESGCMKey key, byte[] encryptedData)
         {
             if (key is not DotNetAESGCMKey keyNet) throw new NotImplementedException();
             // encryptedData = nonceSize + nonce + tagSize + cipherData + tag
@@ -124,7 +124,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             // decrypt
             var plaintext = new byte[cipherDataSize];
             keyNet!.Key.Decrypt(nonce, cipherData, tag, plaintext);
-            return plaintext;
+            return Task.FromResult(plaintext);
         }
     }
 }
