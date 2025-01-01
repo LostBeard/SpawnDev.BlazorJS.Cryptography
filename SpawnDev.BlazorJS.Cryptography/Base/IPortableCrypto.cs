@@ -14,10 +14,10 @@ namespace SpawnDev.BlazorJS.Cryptography
         Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, int iterations = 25000, string hashName = "SHA-256", int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true);
         Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, byte[] salt, int iterations = 25000, string hashName = "SHA-256", int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true);
         // AES-CBC
-        Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData);
-        Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv);
-        Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV = false);
-        Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV = true);
+        Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, AESCBCPadding padding = AESCBCPadding.PKCS7);
+        Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv, AESCBCPadding padding = AESCBCPadding.PKCS7);
+        Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV = false, AESCBCPadding padding = AESCBCPadding.PKCS7);
+        Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV = true, AESCBCPadding padding = AESCBCPadding.PKCS7);
         Task<PortableAESCBCKey> GenerateAESCBCKey(int length, bool extractable = true);
         Task<PortableAESCBCKey> ImportAESCBCKey(byte[] rawKey, bool extractable = true);
         Task<byte[]> ExportAESCBCKey(PortableAESCBCKey key);

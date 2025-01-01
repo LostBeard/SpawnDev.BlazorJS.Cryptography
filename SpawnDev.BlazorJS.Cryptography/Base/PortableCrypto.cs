@@ -2,6 +2,9 @@
 
 namespace SpawnDev.BlazorJS.Cryptography
 {
+    /// <summary>
+    /// PortableCrypto base class shared by all implementations
+    /// </summary>
     public abstract partial class PortableCrypto : IPortableCrypto
     {
         // Digest
@@ -12,10 +15,10 @@ namespace SpawnDev.BlazorJS.Cryptography
         public abstract Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, int iterations = 25000, string hashName = "SHA-256", int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true);
         public abstract Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, byte[] salt, int iterations = 25000, string hashName = "SHA-256", int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true);
         // AES-CBC
-        public abstract Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData);
-        public abstract Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv);
-        public abstract Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV);
-        public abstract Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV);
+        public abstract Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, AESCBCPadding padding = AESCBCPadding.PKCS7);
+        public abstract Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv, AESCBCPadding padding = AESCBCPadding.PKCS7);
+        public abstract Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV = false, AESCBCPadding padding = AESCBCPadding.PKCS7);
+        public abstract Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV = true, AESCBCPadding padding = AESCBCPadding.PKCS7);
         public abstract Task<PortableAESCBCKey> GenerateAESCBCKey(int keySize, bool extractable = true);
         public abstract Task<PortableAESCBCKey> ImportAESCBCKey(byte[] rawKey, bool extractable = true);
         public abstract Task<byte[]> ExportAESCBCKey(PortableAESCBCKey key);
@@ -39,6 +42,11 @@ namespace SpawnDev.BlazorJS.Cryptography
         public abstract byte[] RandomBytes(int length);
         public abstract void RandomBytesFill(byte[] data);
         public abstract void RandomBytesFill(Span<byte> data);
+
+        /// <summary>
+        /// AES-CBC block size
+        /// </summary>
+        public const int AES_CBC_BLOCK_SIZE = 16;
 
         /// <summary>
         /// EC named curves

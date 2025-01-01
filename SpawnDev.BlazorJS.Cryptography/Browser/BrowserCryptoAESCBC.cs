@@ -17,50 +17,126 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <summary>
         /// Encrypt data using an AES-CBC key
         /// </summary>
-        public override async Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV = false)
+        public async Task<Uint8ArrayAsync> Encrypt(PortableAESCBCKey key, Uint8ArrayAsync plainBytes, Uint8ArrayAsync iv, bool prependIV = false, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             if (key is not BrowserAESCBCKey jsKey) throw new NotImplementedException();
-            await using var ret = await SubtleCrypto.Encrypt(new AesCbcParams { Iv = iv }, jsKey!.Key, plainBytes);
-            var encryptedData = await ret.ReadBytes();
-            if (!prependIV) return encryptedData;
-            var encryptedDataLength = encryptedData.Length + iv.Length;
-            var result = new byte[encryptedDataLength];
+            await using var encryptedArrayBuffer = await SubtleCrypto.Encrypt(new AesCbcParamsAsync { Iv = iv }, jsKey!.Key, plainBytes);
+            var encryptedUint8Array = await Uint8ArrayAsync.New(JSA, encryptedArrayBuffer);
+            if (padding == AESCBCPadding.None)
+            {
+                var dataLength = await plainBytes.Get_Length();
+                var paddingSize = AES_CBC_BLOCK_SIZE - (dataLength % AES_CBC_BLOCK_SIZE);
+                var encryptedLength = await encryptedArrayBuffer.Get_ByteLength();
+                var tmp = await encryptedUint8Array.SubArray(0, encryptedLength - paddingSize);
+                await encryptedUint8Array.DisposeAsync();
+                encryptedUint8Array = tmp;
+            }
+            if (!prependIV)
+            {
+                return encryptedUint8Array;
+            }
+            var ivLength = await iv.Get_Length();
+            var encryptedDataWithIvLength = await encryptedUint8Array.Get_Length() + ivLength;
+            var result = await Uint8ArrayAsync.New(JSA, encryptedDataWithIvLength);
             // + iv
-            iv.CopyTo(result, 0);
+            await result.Set(iv, 0);
             // + encrypted data
-            encryptedData.CopyTo(result, iv.Length);
+            await result.Set(encryptedUint8Array, ivLength);
+            await encryptedUint8Array.DisposeAsync();
             return result;
         }
         /// <summary>
         /// Encrypt data using an AES-CBC key
         /// </summary>
-        public override Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV = true)
+        public override async Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, byte[] iv, bool prependIV = false, AESCBCPadding padding = AESCBCPadding.PKCS7)
+        {
+            await using var ivUint8Array = await Uint8ArrayAsync.New(JSA, iv);
+            await using var dataUint8Array = await Uint8ArrayAsync.New(JSA, plainBytes);
+            await using var decrypted = await Encrypt(key, dataUint8Array, ivUint8Array, prependIV, padding);
+            return await decrypted.ReadBytes();
+        }
+        /// <summary>
+        /// Encrypt data using an AES-CBC key
+        /// </summary>
+        public override Task<byte[]> Encrypt(PortableAESCBCKey key, byte[] plainBytes, bool prependIV = true, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             if (key is not BrowserAESCBCKey jsKey) throw new NotImplementedException();
             var iv = RandomBytes(16);
-            return Encrypt(key, plainBytes, iv, prependIV);
+            return Encrypt(key, plainBytes, iv, prependIV, padding);
+        }
+        /// <summary>
+        /// Encrypt data using an AES-CBC key
+        /// </summary>
+        public async Task<Uint8ArrayAsync> Encrypt(PortableAESCBCKey key, Uint8ArrayAsync plainBytes, bool prependIV = true, AESCBCPadding padding = AESCBCPadding.PKCS7)
+        {
+            if (key is not BrowserAESCBCKey jsKey) throw new NotImplementedException();
+            var iv = RandomBytes(16);
+            await using var ivUint8Array = await Uint8ArrayAsync.New(JSA, iv);
+            return await Encrypt(key, plainBytes, ivUint8Array, prependIV, padding);
         }
         /// <summary>
         /// Decrypt data using an AES-CBC key<br/>
         /// This method expects the IV to be supplied separately from the encrypted data
         /// </summary>
-        public override async Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv)
+        public async Task<Uint8ArrayAsync> Decrypt(PortableAESCBCKey key, Uint8ArrayAsync encryptedData, Uint8ArrayAsync iv, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             if (key is not BrowserAESCBCKey jsKey) throw new NotImplementedException();
-            await using var arrayBuffer = await SubtleCrypto.Decrypt(new AesCbcParams { Iv = iv }, jsKey!.Key, encryptedData);
-            return await arrayBuffer.ReadBytes();
+            if (padding == AESCBCPadding.None)
+            {
+                // PKS7 padding must be added because SubtleCrypto's implementation of AES-CBC requires it
+                var dataLength = await encryptedData.Get_Length();
+                var paddingSize = AES_CBC_BLOCK_SIZE - (dataLength % AES_CBC_BLOCK_SIZE);
+                // create a Uint8Array to hold the padded data
+                await using var paddedData = await Uint8ArrayAsync.New(JSA, dataLength + paddingSize);
+                await paddedData.Set(encryptedData, 0);
+                // padding starts as a byte array of size paddingSize where each byte is the paddingSize
+                await using var paddingData = await Uint8ArrayAsync.New(JSA, paddingSize);
+                await paddingData.FillVoid((byte)paddingSize);
+                // use the last paddingSize bytes of data is the iv
+                await using var padBlockIv = await encryptedData.Slice(-paddingSize);
+                await using var padBlock = await Encrypt(jsKey, paddingData, padBlockIv, false, AESCBCPadding.None);
+                await paddedData.Set(padBlock, dataLength);
+                // decrypt
+                var decryptedArrayBuffer = await SubtleCrypto.Decrypt(new AesCbcParamsAsync { Iv = iv }, jsKey.Key, paddedData);
+                // return the decrypted data as a Uint8Array
+                return await Uint8ArrayAsync.New(JSA, decryptedArrayBuffer);
+            }
+            else
+            {
+                await using var arrayBuffer = await SubtleCrypto.Decrypt(new AesCbcParamsAsync { Iv = iv }, jsKey!.Key, encryptedData);
+                return await Uint8ArrayAsync.New(JSA, arrayBuffer);
+            }
+        }
+        /// <summary>
+        /// Decrypt data using an AES-CBC key<br/>
+        /// This method expects the IV to be supplied separately from the encrypted data
+        /// </summary>
+        public override async Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv, AESCBCPadding padding = AESCBCPadding.PKCS7)
+        {
+            await using var ivUint8Array = await Uint8ArrayAsync.New(JSA, iv);
+            await using var encryptedDataUint8Array = await Uint8ArrayAsync.New(JSA, encryptedData);
+            await using var decrypted = await Decrypt(key, encryptedDataUint8Array, ivUint8Array, padding);
+            return await decrypted.ReadBytes();
         }
         /// <summary>
         /// Decrypt data using an AES-CBC key<br/>
         /// This method expects the IV to be prepended to the encrypted data
         /// </summary>
-        public override Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData)
+        public override async Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
-            var iv = new byte[16];
-            Buffer.BlockCopy(encryptedData, 0, iv, 0, 16);
-            var encrypted = new byte[encryptedData.Length - 16];
-            Buffer.BlockCopy(encryptedData, 16, encrypted, 0, encrypted.Length);
-            return Decrypt(key, encrypted, iv);
+            await using var encryptedDataUint8Array = await Uint8ArrayAsync.New(JSA, encryptedData);
+            await using var decrypted = await Decrypt(key, encryptedDataUint8Array, padding);
+            return await decrypted.ReadBytes();
+        }
+        /// <summary>
+        /// Decrypt data using an AES-CBC key<br/>
+        /// This method expects the IV to be prepended to the encrypted data
+        /// </summary>
+        public async Task<Uint8ArrayAsync> Decrypt(PortableAESCBCKey key, Uint8ArrayAsync encryptedData, AESCBCPadding padding = AESCBCPadding.PKCS7)
+        {
+            await using var iv = await encryptedData.Slice(0, 16);
+            await using var encrypted = await encryptedData.Slice(16);
+            return await Decrypt(key, encrypted, iv, padding);
         }
         /// <summary>
         /// Import an AES-CBC key

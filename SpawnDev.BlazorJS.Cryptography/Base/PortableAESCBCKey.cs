@@ -1,5 +1,10 @@
 ﻿namespace SpawnDev.BlazorJS.Cryptography
 {
+    public enum AESCBCPadding
+    {
+        None,
+        PKCS7
+    }
     /// <summary>
     /// AES-CBC key abstract class
     /// </summary>

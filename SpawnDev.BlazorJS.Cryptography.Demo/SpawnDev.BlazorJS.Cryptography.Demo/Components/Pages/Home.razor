@@ -266,4 +266,95 @@
             throw new Exception("AES CBC encryption/decryption failed");
         }
     }
+
+    Dictionary<string, string> AESCBCTestData = new Dictionary<string, string>
+    {
+        { "Key", "d9c165aa46c3e36ad004d6f9bb340975" },
+        { "Iv", "1875cf3fd183bfb8486d1161c82ff82b" },
+        { "DecryptedData", "0566789f0000000042d31c8517457c0c78cfbdf18781e5c727106f22f5d9134f9bfd1db3fb6db07e4f9d000000000000" },
+        { "EncryptedData", "b937270aa14d6fd63380567882cdefffe7d1a2c1bb06cc385906db20c1dcb61e20831c10398f3ce200a5fa72885b10db" },
+    };
+
+    [TestMethod]
+    public async Task IssueNumber1_DotNetCrypto_Test()
+    {
+        var decryptedData = Convert.FromHexString(AESCBCTestData["DecryptedData"]);
+
+        // import key
+        var rawKey = Convert.FromHexString(AESCBCTestData["Key"]);
+        using var nKey = await DotNetCrypto.ImportAESCBCKey(rawKey);
+
+        // put iv into a Uint8Array
+        var iv = Convert.FromHexString(AESCBCTestData["Iv"]);
+
+        // put encryptedData into a Uint8Array
+        var encryptedData = Convert.FromHexString(AESCBCTestData["EncryptedData"]);
+
+        // decrypt using AES-CBC without padding
+        var decrypted = await DotNetCrypto.Decrypt(nKey, encryptedData, iv, AESCBCPadding.None);
+
+        // compare with known correct decrypted data
+        var succ = decrypted.SequenceEqual(decryptedData);
+        if (!succ)
+        {
+            throw new Exception("Failed Decrypt test");
+        }
+
+        // Test encryption
+        var encrypted = await DotNetCrypto.Encrypt(nKey, decryptedData, iv, padding: AESCBCPadding.None);
+        // compare with known correct encrypted data
+        var encryptedSucc = encrypted.SequenceEqual(encryptedData);
+        if (!encryptedSucc)
+        {
+            throw new Exception("Failed Encrypt test");
+        }
+    }
+
+    [TestMethod]
+    public async Task IssueNumber1_BrowserCrypto_Test()
+    {
+        var decryptedData = Convert.FromHexString(AESCBCTestData["DecryptedData"]);
+
+        // import key
+        var rawKey = Convert.FromHexString(AESCBCTestData["Key"]);
+        using var nKey = await BrowserCrypto.ImportAESCBCKey(rawKey);
+
+        // put iv into a Uint8Array
+        var iv = Convert.FromHexString(AESCBCTestData["Iv"]);
+
+        // put encryptedData into a Uint8Array
+        var encryptedData = Convert.FromHexString(AESCBCTestData["EncryptedData"]);
+
+        // decrypt using AES-CBC without padding
+        var decrypted = await BrowserCrypto.Decrypt(nKey, encryptedData, iv, AESCBCPadding.None);
+
+        // compare with known correct decrypted data
+        var succ = decrypted.SequenceEqual(decryptedData);
+        if (!succ)
+        {
+            throw new Exception("Failed Decrypt test");
+        }
+
+        // Test encryption
+        var encrypted = await BrowserCrypto.Encrypt(nKey, decryptedData, iv, padding: AESCBCPadding.None);
+        // compare with known correct encrypted data
+        var encryptedSucc = encrypted.SequenceEqual(encryptedData);
+        if (!encryptedSucc)
+        {
+            throw new Exception("Failed Encrypt test");
+        }
+    }
+
+    // DecryptInPlace data
+    string DecryptInPlace_Key = "2cFlqkbD42rQBNb5uzQJdQ==";
+    string DecryptInPlace_Iv = "GHXPP9GDv7hIbRFhyC/4Kw==";
+    string DecryptInPlace_DecryptedData = "BWZ4nwAAAABC0xyFF0V8DHjPvfGHgeXHJxBvIvXZE0+b/R2z+22wfk+dAAAAAAAAAAAAAAAAAAE=";
+    string DecryptInPlace_EncryptedData = "uTcnCqFNb9YzgFZ4gs3v/+fRosG7Bsw4WQbbIMHcth4ggxwQOY884gCl+nKIWxDbAAAAAAAAAAE=";
+
+    // TransformFinal data
+    string TransformFinal_Key = "QtMchRdFfAx4z73xh4Hlxw==";
+    string TransformFinal_Iv = "/mo5px7WXp0WkpnoEzDxTQ==";
+    string TransformFinal_DecryptedData = "IU3TPlmnHKmzHim+4Sm/VJGcQlVVGi96TN/ahr66VvN/2N3f0i62gobvQ3MwpZzHAeo1vMqe1P0GayTd7NEX3EbZpoCYX72M2ZOPOiVd12xLbNCWyhxcDg0gz8DfFEaCNOxkkMeNJmvThqLmiW+2fv26+Ga4CO8Uy6yDtblTUg0xp1nzrzJW2lXUuSteLQt2rWQ6upyXpb5AmOKXgLXAhXhjSV3+85VQnDH5a/pzDs9Pp5h5V/x6A6yOWqLc+tmR61igJLNiV05iPidvFn0H58S+Lep2otNbw49NGcS+C8uv3FLbbCvqSNYuuJIdazdfJSwsK1D+maay0/Fl4GKAYjODso1sVSbm0TSg6ijl/Hr9Fh91dIOR296gQMP50mg/yxAp/LSYA/LYAK+dV6QmBii/O8P8m+0VV+vmYP/hbHQ/WcC+6aV/90hb63WUc65VY72L7yVDF+/tsDav9Rv1xOgfb8sczWaD1vEvxPdX+vCvbeR4p/msH1pseQYX/NXBPh5tqdHmnjPx5AAN1WkCKf3OvOLC+nrRf+VlUuKWT0g7nRsSXg2BylKp5VASKDdtzHWDND8ugvRXO2Uv4WxsLm+qw7USuvEvpT83Zhk2bg1jt+GWE+UGXoXKZtM5npRqTf1xnqSf2+vq+kLAPg+D4PkFDd6G5nA=";
+    string TransformFinal_EncryptedData = "99FTARJV7R9nAbhLTgCNnqBVCPf9Go2ycLawKraunDZB/Krhv+rZh55LbHF8Q+pxVi8KqAjhog9TeIu6BFqwack8TyVFHHb4zUnXVFkAT8rFteBegaJto/ZHPMzrn9tNaLb2C5riiNwiDAQce1ilizSnu5laK1ej++wHnSV+yMX6Wf93y2vtxX+N3E1rnyfzWfuG7V5tXEo4H3fvtnftGYtS3/BjoXNph+1Gph9t/075aLK9LSPTNQI/nUELRDB0t84o8HAS8/yHagdHbkSQYXFaukUxiEa7QW7Q0lDleS5SuNfTKzOm68TQK8PzJcfgvxIQue+/N7Al8P/4llrfc1O8qjgrR0cXbMk8jWEX2w0rMH6F74NCuvgzpNEWWH1k1IU6NQecS0s9M0U9Irv1cogtsNeJlIuQiNCDFXPzVx4kJ9Xg2y+LYDQTWKaKT21sqQeBzAY3Rqp1cx/nOHhpZToIhKBLLGuFoGnUBgsiIdv7jvou9KcIyVCkAjTj361097fg7pvVPUWrRPnNYyfovlMEiAbXd0iEhqjcPqk9Dz1lGjSEg05RTp8RbH8+neUkh3D6GcCR4F+RxZzumU3e0UetRlefqMdgBnpKgx9HDjzMofru2prK/hwlFMRyUJroXjtJoDY2quM7a0qg3qGOWw==";
+
 }

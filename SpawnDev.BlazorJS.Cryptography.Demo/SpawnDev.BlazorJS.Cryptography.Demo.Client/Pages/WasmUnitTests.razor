@@ -1,5 +1,6 @@
 ﻿@page "/WasmUnitTests"
 @using SpawnDev.BlazorJS.Cryptography.Browser
+@using SpawnDev.BlazorJS.JSObjects
 @using SpawnDev.BlazorJS.RemoteJSRuntime
 @using SpawnDev.Blazor.UnitTesting
 @using System.Reflection
@@ -17,11 +18,11 @@
             It uses the Blazor IJSInProcessRuntime and is only compatible with webassembly rendering.
         </li>
         <li>
-            BrowserCrypto service runs on the web browser and uses the browser's SubtleCrypto API.<br/>
+            BrowserCrypto service runs on the web browser and uses the browser's SubtleCrypto API.<br />
             It uses the Blazor IJSRuntime and is compatible with both server side rendering and webassembly rendering.
         </li>
     </ul>
-    
+
 </div>
 
 <UnitTestsView TypeInstanceResolver="TestTypeResolver" TestAssemblies="Assemblies" TestTypes="Types"></UnitTestsView>
@@ -36,6 +37,9 @@
 
     [Inject]
     IJSRuntime JSR { get; set; }
+
+    [Inject]
+    BlazorJSRuntime JS { get; set; }
 
     List<Assembly>? Assemblies = new List<Assembly>();
     List<Type>? Types = new List<Type>();
@@ -267,4 +271,137 @@
             throw new Exception("AES CBC encryption/decryption failed");
         }
     }
+
+    Dictionary<string, string> AESCBCTestData = new Dictionary<string, string>
+    {
+        { "Key", "d9c165aa46c3e36ad004d6f9bb340975" },
+        { "Iv", "1875cf3fd183bfb8486d1161c82ff82b" },
+        { "DecryptedData", "0566789f0000000042d31c8517457c0c78cfbdf18781e5c727106f22f5d9134f9bfd1db3fb6db07e4f9d000000000000" },
+        { "EncryptedData", "b937270aa14d6fd63380567882cdefffe7d1a2c1bb06cc385906db20c1dcb61e20831c10398f3ce200a5fa72885b10db" },
+    };
+
+    [TestMethod]
+    public async Task IssueNumber1_BrowserWASMCrypto_Test()
+    {
+        var decryptedData = Convert.FromHexString(AESCBCTestData["DecryptedData"]);
+
+        // import key
+        var rawKey = Convert.FromHexString(AESCBCTestData["Key"]);
+        using var nKey = await BrowserWASMCrypto.ImportAESCBCKey(rawKey);
+
+        // put iv into a Uint8Array
+        var iv = Convert.FromHexString(AESCBCTestData["Iv"]);
+
+        // put encryptedData into a Uint8Array
+        var encryptedData = Convert.FromHexString(AESCBCTestData["EncryptedData"]);
+
+        // decrypt using AES-CBC without padding
+        var decrypted = await BrowserWASMCrypto.Decrypt(nKey, encryptedData, iv, AESCBCPadding.None);
+
+        // compare with known correct decrypted data
+        var succ = decrypted.SequenceEqual(decryptedData);
+        if (!succ)
+        {
+            throw new Exception("Failed Decrypt test");
+        }
+
+        // Test encryption
+        var encrypted = await BrowserWASMCrypto.Encrypt(nKey, decryptedData, iv, padding: AESCBCPadding.None);
+        // compare with known correct encrypted data
+        var encryptedSucc = encrypted.SequenceEqual(encryptedData);
+        if (!encryptedSucc)
+        {
+            throw new Exception("Failed Encrypt test");
+        }
+    }
+
+    // int AES_CBC_BLOCK_SIZE = 16;
+    // async Task<Uint8Array> EncryptPaddingNone(CryptoKey key, Uint8Array data, Uint8Array iv)
+    // {
+    //     using var subtle = JS.Get<SubtleCrypto>("crypto.subtle");
+
+    //     // calculate padding size
+    //     var paddingSize = AES_CBC_BLOCK_SIZE - (data.Length % AES_CBC_BLOCK_SIZE);
+    //     using var encryptedArrayBuffer = await subtle.Encrypt(new AesCbcParams { Iv = iv }, key, data);
+    //     using var encrypted = new Uint8Array(encryptedArrayBuffer);
+
+    //     // trim the padding before returning
+    //     return encrypted.Slice(0, paddingSize);
+    // }
+
+    // async Task<Uint8Array> AddPKS7PAdding(CryptoKey key, Uint8Array encryptedData)
+    // {
+    //     // calculate padding size
+    //     var paddingSize = AES_CBC_BLOCK_SIZE - (encryptedData.Length % AES_CBC_BLOCK_SIZE);
+    //     // create a Uint8Array to hold the padded data
+    //     using var paddedData = new Uint8Array(encryptedData.ByteLength + paddingSize);
+    //     paddedData.Set(encryptedData, 0);
+    //     // padding starts as a byte array of size paddingSize where each byte is the paddingSize
+    //     using var padding = new Uint8Array(paddingSize);
+    //     padding.FillVoid((byte)paddingSize);
+    //     // use the last paddingSize bytes of data is the iv
+    //     using var padBlockIv = encryptedData.Slice(-paddingSize);
+    //     using var padBlock = await EncryptPaddingNone(key, padding, padBlockIv);
+    //     paddedData.Set(padBlock, encryptedData.Length);
+    //     return paddedData;
+    // }
+
+    // async Task<Uint8Array> DecryptPaddingNone(CryptoKey key, Uint8Array data, Uint8Array iv)
+    // {
+    //     using var subtle = JS.Get<SubtleCrypto>("crypto.subtle");
+
+    //     // calculate padding size
+    //     var paddingSize = AES_CBC_BLOCK_SIZE - (data.Length % AES_CBC_BLOCK_SIZE);
+
+    //     // create a Uint8Array to hold the padded data
+    //     using var paddedData = new Uint8Array(data.ByteLength + paddingSize);
+    //     paddedData.Set(data, 0);
+
+    //     // padding starts as a byte array of size paddingSize where each byte is the paddingSize
+    //     using var padding = new Uint8Array(paddingSize);
+    //     padding.FillVoid((byte)paddingSize);
+
+    //     // use the last paddingSize bytes of data is the iv
+    //     using var padBlockIv = data.Slice(-paddingSize);
+    //     using var padBlock = await EncryptPaddingNone(key, padding, padBlockIv);
+    //     paddedData.Set(padBlock, data.Length);
+
+    //     // decrypt
+    //     using var decryptedArrayBuffer = await subtle.Decrypt(new AesCbcParams { Iv = iv }, key, paddedData);
+
+    //     // return the decrypted data as a Uint8Array
+    //     return new Uint8Array(decryptedArrayBuffer);
+    // }
+
+    // [TestMethod]
+    // public async Task IssueNumber1_TestDataJS_Test()
+    // {
+    //     using var subtle = JS.Get<SubtleCrypto>("crypto.subtle");
+
+    //     // import key
+    //     var rawKey = Convert.FromHexString(AESCBCTestData["Key"]);
+    //     using var nKey = await subtle.ImportKey<CryptoKey>("raw", rawKey, "AES-CBC", true, new[] { "encrypt", "decrypt" });
+
+    //     // put iv into a Uint8Array
+    //     var iv = Convert.FromHexString(AESCBCTestData["Iv"]);
+    //     using var ivUint8Array = new Uint8Array(iv);
+
+    //     // put encryptedData into a Uint8Array
+    //     var encryptedData = Convert.FromHexString(AESCBCTestData["EncryptedData"]);
+    //     using var encryptedDataUint8Array = new Uint8Array(encryptedData);
+
+    //     // decrypt using AES-CBC without padding
+    //     using var decryptedUint8Array = await DecryptPaddingNone(nKey, encryptedDataUint8Array, ivUint8Array);
+
+    //     // Copy the Uint8Array data into a byte array
+    //     var decrypted = decryptedUint8Array.ReadBytes();
+
+    //     // compare with known correct decrypted data
+    //     var decryptedData = Convert.FromHexString(AESCBCTestData["DecryptedData"]);
+    //     var succ = decrypted.SequenceEqual(decryptedData);
+    //     if (!succ)
+    //     {
+    //         throw new Exception("Failed test");
+    //     }
+    // }
 }

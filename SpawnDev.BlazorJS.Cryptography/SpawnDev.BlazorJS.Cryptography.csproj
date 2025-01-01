@@ -4,14 +4,14 @@
 		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<Version>2.0.7</Version>
+		<Version>2.0.8</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<EmbedAllSources>true</EmbedAllSources>
 		<DebugType>Embedded</DebugType>
 		<Title>SpawnDev.BlazorJS.Cryptography</Title>
 		<Authors>LostBeard</Authors>
-		<Description>A cross platform cryptography library that supports encryption with AES-GCM, shared secret generation with ECDH, data signatures with ECDSA, and hashing with SHA on Windows, Linux, and Browser (Blazor) platforms.</Description>
+		<Description>A cross platform cryptography library that supports encryption with AES-GCM and AES-CBC, shared secret generation with ECDH, data signatures with ECDSA, and hashing with SHA on Windows, Linux, and Browser (Blazor) platforms.</Description>
 		<PackageProjectUrl>https://github.com/LostBeard/SpawnDev.BlazorJS.Cryptography</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="SpawnDev.BlazorJS" Version="2.5.32" />
+	  <PackageReference Include="SpawnDev.BlazorJS" Version="2.5.33" />
 	</ItemGroup>
 
 </Project>
