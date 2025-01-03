@@ -116,6 +116,7 @@ namespace SpawnDev.BlazorJS.Cryptography
                 paddingData.FillVoid((byte)AES_CBC_BLOCK_SIZE);
                 // use the last paddingSize bytes of data is the iv
                 using var padBlockIv = encryptedData.Slice(-AES_CBC_BLOCK_SIZE);
+                // encrypt the padding data
                 using var padBlock = await Encrypt(jsKey, paddingData, padBlockIv, false, AESCBCPadding.None);
                 paddedData.Set(padBlock, encryptedDataLength);
                 // decrypt

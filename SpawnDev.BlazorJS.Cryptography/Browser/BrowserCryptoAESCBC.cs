@@ -92,7 +92,6 @@ namespace SpawnDev.BlazorJS.Cryptography
             if (key is not BrowserAESCBCKey jsKey) throw new NotImplementedException();
             if (padding == AESCBCPadding.None)
             {
-                // PKS7 padding must be added because SubtleCrypto's implementation of AES-CBC requires it
                 var dataLength = await encryptedData.Get_Length();
                 // PKS7 padding must be added because SubtleCrypto's implementation of AES-CBC requires it
                 if (dataLength % AES_CBC_BLOCK_SIZE != 0)
@@ -107,6 +106,7 @@ namespace SpawnDev.BlazorJS.Cryptography
                 await paddingData.FillVoid((byte)AES_CBC_BLOCK_SIZE);
                 // use the last paddingSize bytes of data is the iv
                 await using var padBlockIv = await encryptedData.Slice(-AES_CBC_BLOCK_SIZE);
+                // encrypt the padding data
                 await using var padBlock = await Encrypt(jsKey, paddingData, padBlockIv, false, AESCBCPadding.None);
                 await paddedData.Set(padBlock, dataLength);
                 // decrypt
