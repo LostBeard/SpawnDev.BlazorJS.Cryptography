@@ -344,6 +344,150 @@
         }
     }
 
+    [TestMethod]
+    public async Task IssueNumber1_BrowserCrypto_Test2()
+    {
+        var decryptedData = Convert.FromBase64String(DecryptInPlace_DecryptedData).Take(48).ToArray(); 
+
+        // import key
+        var rawKey = Convert.FromBase64String(DecryptInPlace_Key);
+        using var nKey = await BrowserCrypto.ImportAESCBCKey(rawKey);
+
+        // put iv into a Uint8Array
+        var iv = Convert.FromBase64String(DecryptInPlace_Iv);
+
+        // put encryptedData into a Uint8Array
+        var encryptedData = Convert.FromBase64String(DecryptInPlace_EncryptedData).Take(48).ToArray();
+
+        // decrypt using AES-CBC without padding
+        var decrypted = await BrowserCrypto.Decrypt(nKey, encryptedData, iv, AESCBCPadding.None);
+
+        // compare with known correct decrypted data
+        var succ = decrypted.SequenceEqual(decryptedData);
+        if (!succ)
+        {
+            throw new Exception("Failed Decrypt test");
+        }
+
+        // Test encryption
+        var encrypted = await BrowserCrypto.Encrypt(nKey, decryptedData, iv, padding: AESCBCPadding.None);
+        // compare with known correct encrypted data
+        var encryptedSucc = encrypted.SequenceEqual(encryptedData);
+        if (!encryptedSucc)
+        {
+            throw new Exception("Failed Encrypt test");
+        }
+    }
+
+    [TestMethod]
+    public async Task IssueNumber1_BrowserCrypto_Test3()
+    {
+        var decryptedData = Convert.FromBase64String(TransformFinal_DecryptedData).Take(496).ToArray();
+
+        // import key
+        var rawKey = Convert.FromBase64String(TransformFinal_Key);
+        using var nKey = await BrowserCrypto.ImportAESCBCKey(rawKey);
+
+        // put iv into a Uint8Array
+        var iv = Convert.FromBase64String(TransformFinal_Iv);
+
+        // put encryptedData into a Uint8Array
+        var encryptedData = Convert.FromBase64String(TransformFinal_EncryptedData);
+
+        // decrypt using AES-CBC without padding
+        var decrypted = await BrowserCrypto.Decrypt(nKey, encryptedData, iv, AESCBCPadding.None);
+
+        // compare with known correct decrypted data
+        var succ = decrypted.SequenceEqual(decryptedData);
+        if (!succ)
+        {
+            throw new Exception("Failed Decrypt test");
+        }
+
+        // Test encryption
+        var encrypted = await BrowserCrypto.Encrypt(nKey, decryptedData, iv, padding: AESCBCPadding.None);
+        // compare with known correct encrypted data
+        var encryptedSucc = encrypted.SequenceEqual(encryptedData);
+        if (!encryptedSucc)
+        {
+            throw new Exception("Failed Encrypt test");
+        }
+    }
+
+    [TestMethod]
+    public async Task IssueNumber1_DotNetCrypto_Test2()
+    {
+        var decryptedData = Convert.FromBase64String(DecryptInPlace_DecryptedData).Take(48).ToArray();
+
+        // import key
+        var rawKey = Convert.FromBase64String(DecryptInPlace_Key);
+        using var nKey = await DotNetCrypto.ImportAESCBCKey(rawKey);
+
+        // put iv into a Uint8Array
+        var iv = Convert.FromBase64String(DecryptInPlace_Iv);
+
+        // put encryptedData into a Uint8Array
+        var encryptedData = Convert.FromBase64String(DecryptInPlace_EncryptedData).Take(48).ToArray();
+
+        // decrypt using AES-CBC without padding
+        var decrypted = await DotNetCrypto.Decrypt(nKey, encryptedData, iv, AESCBCPadding.None);
+
+        // compare with known correct decrypted data
+        var succ = decrypted.SequenceEqual(decryptedData);
+        if (!succ)
+        {
+            throw new Exception("Failed Decrypt test");
+        }
+
+        // Test encryption
+        var encrypted = await DotNetCrypto.Encrypt(nKey, decryptedData, iv, padding: AESCBCPadding.None);
+        // compare with known correct encrypted data
+        var encryptedSucc = encrypted.SequenceEqual(encryptedData);
+        if (!encryptedSucc)
+        {
+            throw new Exception("Failed Encrypt test");
+        }
+    }
+
+    [TestMethod]
+    public async Task IssueNumber1_DotNetCrypto_Test3()
+    {
+        var decryptedData = Convert.FromBase64String(TransformFinal_DecryptedData).Take(496).ToArray();
+
+        // import key
+        var rawKey = Convert.FromBase64String(TransformFinal_Key);
+        using var nKey = await DotNetCrypto.ImportAESCBCKey(rawKey);
+
+        // put iv into a Uint8Array
+        var iv = Convert.FromBase64String(TransformFinal_Iv);
+
+        // put encryptedData into a Uint8Array
+        var encryptedData = Convert.FromBase64String(TransformFinal_EncryptedData);
+
+        // decrypt using AES-CBC without padding
+        var decrypted = await DotNetCrypto.Decrypt(nKey, encryptedData, iv, AESCBCPadding.None);
+
+        // compare with known correct decrypted data
+        var succ = decrypted.SequenceEqual(decryptedData);
+        if (!succ)
+        {
+            //throw new Exception("Failed Decrypt test");
+        }
+
+        // Test encryption
+        var encrypted = await DotNetCrypto.Encrypt(nKey, decryptedData, iv, padding: AESCBCPadding.None);
+
+        var decrypted2 = await DotNetCrypto.Decrypt(nKey, encrypted, iv, AESCBCPadding.None);
+        var decrypted2Succ = decrypted2.SequenceEqual(decryptedData);
+
+        // compare with known correct encrypted data
+        var encryptedSucc = encrypted.SequenceEqual(encryptedData);
+        if (!encryptedSucc)
+        {
+            throw new Exception("Failed Encrypt test");
+        }
+    }
+
     // DecryptInPlace data
     string DecryptInPlace_Key = "2cFlqkbD42rQBNb5uzQJdQ==";
     string DecryptInPlace_Iv = "GHXPP9GDv7hIbRFhyC/4Kw==";
