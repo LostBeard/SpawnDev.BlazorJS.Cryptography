@@ -20,16 +20,25 @@ namespace SpawnDev.BlazorJS.Cryptography
         public async Task<Uint8ArrayAsync> Encrypt(PortableAESCBCKey key, Uint8ArrayAsync plainBytes, Uint8ArrayAsync iv, bool prependIV = false, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             if (key is not BrowserAESCBCKey jsKey) throw new NotImplementedException();
-            await using var encryptedArrayBuffer = await SubtleCrypto.Encrypt(new AesCbcParamsAsync { Iv = iv }, jsKey!.Key, plainBytes);
-            var encryptedUint8Array = await Uint8ArrayAsync.New(JSA, encryptedArrayBuffer);
+            Uint8ArrayAsync encryptedUint8Array;
             if (padding == AESCBCPadding.None)
             {
                 var dataLength = await plainBytes.Get_Length();
-                var paddingSize = AES_CBC_BLOCK_SIZE - (dataLength % AES_CBC_BLOCK_SIZE);
+                if (dataLength % AES_CBC_BLOCK_SIZE != 0)
+                {
+                    throw new Exception($"{plainBytes} length must be a multiple of 16 when using no padding.");
+                }
+                await using var encryptedArrayBuffer = await SubtleCrypto.Encrypt(new AesCbcParamsAsync { Iv = iv }, jsKey!.Key, plainBytes);
+                encryptedUint8Array = await Uint8ArrayAsync.New(JSA, encryptedArrayBuffer);
                 var encryptedLength = await encryptedArrayBuffer.Get_ByteLength();
-                var tmp = await encryptedUint8Array.SubArray(0, encryptedLength - paddingSize);
+                var tmp = await encryptedUint8Array.SubArray(0, encryptedLength - AES_CBC_BLOCK_SIZE);
                 await encryptedUint8Array.DisposeAsync();
                 encryptedUint8Array = tmp;
+            }
+            else
+            {
+                await using var encryptedArrayBuffer = await SubtleCrypto.Encrypt(new AesCbcParamsAsync { Iv = iv }, jsKey!.Key, plainBytes);
+                encryptedUint8Array = await Uint8ArrayAsync.New(JSA, encryptedArrayBuffer);
             }
             if (!prependIV)
             {
@@ -85,15 +94,19 @@ namespace SpawnDev.BlazorJS.Cryptography
             {
                 // PKS7 padding must be added because SubtleCrypto's implementation of AES-CBC requires it
                 var dataLength = await encryptedData.Get_Length();
-                var paddingSize = AES_CBC_BLOCK_SIZE - (dataLength % AES_CBC_BLOCK_SIZE);
+                // PKS7 padding must be added because SubtleCrypto's implementation of AES-CBC requires it
+                if (dataLength % AES_CBC_BLOCK_SIZE != 0)
+                {
+                    throw new Exception($"{encryptedData} length must be a multiple of 16 when using no padding.");
+                }
                 // create a Uint8Array to hold the padded data
-                await using var paddedData = await Uint8ArrayAsync.New(JSA, dataLength + paddingSize);
+                await using var paddedData = await Uint8ArrayAsync.New(JSA, dataLength + AES_CBC_BLOCK_SIZE);
                 await paddedData.Set(encryptedData, 0);
                 // padding starts as a byte array of size paddingSize where each byte is the paddingSize
-                await using var paddingData = await Uint8ArrayAsync.New(JSA, paddingSize);
-                await paddingData.FillVoid((byte)paddingSize);
+                await using var paddingData = await Uint8ArrayAsync.New(JSA, AES_CBC_BLOCK_SIZE);
+                await paddingData.FillVoid((byte)AES_CBC_BLOCK_SIZE);
                 // use the last paddingSize bytes of data is the iv
-                await using var padBlockIv = await encryptedData.Slice(-paddingSize);
+                await using var padBlockIv = await encryptedData.Slice(-AES_CBC_BLOCK_SIZE);
                 await using var padBlock = await Encrypt(jsKey, paddingData, padBlockIv, false, AESCBCPadding.None);
                 await paddedData.Set(padBlock, dataLength);
                 // decrypt

@@ -35,6 +35,10 @@ namespace SpawnDev.BlazorJS.Cryptography
             if (key is not DotNetAESCBCKey nKey) throw new NotImplementedException();
             if (padding == AESCBCPadding.None)
             {
+                if (plainBytes.Length % AES_CBC_BLOCK_SIZE != 0)
+                {
+                    throw new Exception($"{plainBytes} length must be a multiple of 16 when using no padding.");
+                }
                 nKey.Key.Padding = PaddingMode.None;
             }
             else
@@ -80,12 +84,16 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="padding"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv, AESCBCPadding padding = AESCBCPadding.PKCS7)
+        public override async Task<byte[]> Decrypt(PortableAESCBCKey key, byte[] encryptedData, byte[] iv, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
             if (key is not DotNetAESCBCKey nKey) throw new NotImplementedException();
             if (padding == AESCBCPadding.None)
             {
                 nKey.Key.Padding = PaddingMode.None;
+                if (encryptedData.Length % AES_CBC_BLOCK_SIZE != 0)
+                {
+                    throw new Exception($"{encryptedData} length must be a multiple of 16 when using no padding.");
+                }
             }
             else
             {
@@ -96,12 +104,10 @@ namespace SpawnDev.BlazorJS.Cryptography
             using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Write);
             using var srDecrypt = new BinaryWriter(csDecrypt);
             srDecrypt.Write(encryptedData);
-            var remainder = encryptedData.Length % nKey.Key.BlockSize;
-
             csDecrypt.FlushFinalBlock();
             msDecrypt.Position = 0;
             var data = msDecrypt.ToArray();
-            return Task.FromResult(data);
+            return data;
         }
         /// <summary>
         /// Decrypt data using an AES-CBC key
