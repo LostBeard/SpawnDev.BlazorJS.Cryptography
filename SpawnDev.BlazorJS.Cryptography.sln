@@ -9,12 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptogra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.Demo.Client", "SpawnDev.BlazorJS.Cryptography.Demo\SpawnDev.BlazorJS.Cryptography.Demo.Client\SpawnDev.BlazorJS.Cryptography.Demo.Client.csproj", "{0280B64E-241A-42B0-B5CF-56D3768D2C86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.DemoLinux", "SpawnDev.BlazorJS.Cryptography.DemoLinux\SpawnDev.BlazorJS.Cryptography.DemoLinux\SpawnDev.BlazorJS.Cryptography.DemoLinux.csproj", "{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.DemoLinux.Client", "SpawnDev.BlazorJS.Cryptography.DemoLinux\SpawnDev.BlazorJS.Cryptography.DemoLinux.Client\SpawnDev.BlazorJS.Cryptography.DemoLinux.Client.csproj", "{2099FE7A-79CE-4D24-95A1-1A7934B00054}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.BlazorJS.Cryptography.Net4", "SpawnDev.BlazorJS.Cryptography.Net4\SpawnDev.BlazorJS.Cryptography.Net4.csproj", "{78975F3A-51A0-4296-9BB0-DC78E966311D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,18 +27,6 @@ Global
 		{0280B64E-241A-42B0-B5CF-56D3768D2C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0280B64E-241A-42B0-B5CF-56D3768D2C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0280B64E-241A-42B0-B5CF-56D3768D2C86}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9AD6E7ED-5FF3-4D00-9163-9F00DCF6847F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2099FE7A-79CE-4D24-95A1-1A7934B00054}.Release|Any CPU.Build.0 = Release|Any CPU
-		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{78975F3A-51A0-4296-9BB0-DC78E966311D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
