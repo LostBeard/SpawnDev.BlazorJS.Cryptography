@@ -5,6 +5,7 @@
 @using SpawnDev.Blazor.UnitTesting
 @using System.Reflection
 @using System.Text
+@using System.Security.Cryptography
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 <PageTitle>Home</PageTitle>
@@ -252,6 +253,21 @@
         if (!TestMessageBytes.SequenceEqual(decrypted))
         {
             throw new Exception("AES CBC encryption/decryption failed");
+        }
+    }
+
+    [TestMethod]
+    public async Task AESGCMBrowserEncryptBrowserWASMDecryptTest()
+    {
+        var rawKey = RandomNumberGenerator.GetBytes(64);
+        using var key = await BrowserCrypto.GenerateAESGCMKey(rawKey);
+        var encrypted = await BrowserCrypto.Encrypt(key, TestMessageBytes);
+        // import AES-CBC key byte array in dotnet
+        using var dnKey = await BrowserWASMCrypto.GenerateAESGCMKey(rawKey);
+        var decrypted = await BrowserWASMCrypto.Decrypt(dnKey, encrypted);
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+        {
+            throw new Exception("AES GCM encryption/decryption failed");
         }
     }
 
