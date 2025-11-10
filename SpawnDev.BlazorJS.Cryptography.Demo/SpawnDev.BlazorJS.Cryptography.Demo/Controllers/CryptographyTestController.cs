@@ -47,7 +47,7 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         public async Task<IEnumerable<string>> IdentifyPost(string[] data)
         {
             await InitAsync();
-            var ret = "Hellow world!!";
+            var ret = "Hello world!!";
             return new string[] { ret };
         }
 
@@ -58,7 +58,7 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
             // import the browser's base64 encoded ECDH public key
             using var browsersECDHKey = await DotNetCrypto.ImportECDHKey(Convert.FromBase64String(args.SenderECDHPublicKeyB64));
             // generate a shared secret
-            // the browser will geenrate a secret that should be identical to the one the server creates
+            // the browser will generate a secret that should be identical to the one the server creates
             var sharedSecret = await DotNetCrypto.DeriveBits(ECDHKey!, browsersECDHKey);
             // send it to the browser for comparison. you would never do this in production.
             return sharedSecret;
