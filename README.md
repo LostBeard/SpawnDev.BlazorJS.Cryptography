@@ -15,6 +15,9 @@ Most of Microsoft's System.Security.Cryptography library is marked `[Unsupported
 
 ### PortableCrypto Classes
 The classes `DotNetCrypto`, `BrowserCrypto`, and `BrowserWASMCrypto` all inherit from [`PortableCrypto`](#portablecrypto-abstract-class) to provide a shared interface to common cryptography methods regardless of the platform the app is being executed on.
+
+### IPortableCrypto Interface
+PortableCrypto implements the IPortableCrypto interface. Therefore all implementing classes, `DotNetCrypto`, `BrowserCrypto`, and `BrowserWASMCrypto`, implement it also.
    
 **DotNetCrypto**  
 - Uses .Net System.Security.Cryptography on the executing platform
@@ -54,10 +57,11 @@ Blazor Server Program.cs
 builder.Services.AddBlazorJSRuntime();
 
 // Crypto for the server. Uses System.Security.Cryptography.
+// Runs on the server.
 builder.Services.AddSingleton<DotNetCrypto>();
 
 // Crypto for the browser. Uses the browser's SubtleCrypto API via IJSRuntime.
-// Used on server for server side rendering
+// Supports both server rendering and WebAssembly rendering modes. Runs in the browser.
 builder.Services.AddScoped<BrowserCrypto>();
 ```
 
@@ -67,9 +71,15 @@ WebAssembly Program.cs
 // Add BlazorJSRuntime service
 builder.Services.AddBlazorJSRuntime();
 
-// Crypto for the browser. Uses the browser's SubtleCrypto API.
-// Used in Blazor WebAssembly for WebAssembly rendering
+// Crypto for the browser. Uses the browser's SubtleCrypto API via IJSRuntime.
+// Supports both server rendering and WebAssembly rendering modes
 builder.Services.AddScoped<BrowserCrypto>();
+
+// OR
+
+// Crypto for the browser. Uses the browser's SubtleCrypto API via IJSInProcessRuntime.
+// Supports only WebAssembly rendering
+builder.Services.AddScoped<BrowserWASMCrypto>();
 ```
 
 ### SHA Example
