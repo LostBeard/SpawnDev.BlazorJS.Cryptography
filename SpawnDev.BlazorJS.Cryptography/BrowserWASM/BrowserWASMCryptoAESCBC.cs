@@ -15,7 +15,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         {
             var keyUsages = new string[] { "encrypt", "decrypt" };
             var key = await SubtleCrypto.GenerateKey<CryptoKey>(new AesKeyGenParams { Name = Algorithm.AESCBC, Length = keySize }, extractable, keyUsages);
-            return new BrowserWASMAESCBCKey(key, keySize);
+            return new BrowserWASMAESCBCKey(key);
         }
         /// <summary>
         /// Encrypt data using an AES-CBC key
@@ -159,7 +159,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         public override async Task<PortableAESCBCKey> ImportAESCBCKey(byte[] rawKey, bool extractable = true)
         {
             var key = await SubtleCrypto.ImportKey("raw", rawKey, Algorithm.AESCBC, extractable, new string[] { "encrypt", "decrypt" });
-            return new BrowserWASMAESCBCKey(key, rawKey.Length * 8);
+            return new BrowserWASMAESCBCKey(key);
         }
         /// <summary>
         /// Exports an AES-CBC key as a byte array

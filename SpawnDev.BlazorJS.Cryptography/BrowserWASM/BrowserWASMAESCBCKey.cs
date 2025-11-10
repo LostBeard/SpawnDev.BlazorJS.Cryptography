@@ -22,10 +22,11 @@ namespace SpawnDev.BlazorJS.Cryptography.BrowserWASM
         /// <summary>
         /// Create a new instance
         /// </summary>
-        public BrowserWASMAESCBCKey(CryptoKey key, int keySize)
+        public BrowserWASMAESCBCKey(CryptoKey key)
         {
             Key = key;
-            KeySize = keySize;
+            var algorithmParams = key.AlgorithmAs<AesKeyGenParams>();
+            KeySize = algorithmParams.Length;
         }
         /// <summary>
         /// Dispose instance resources
