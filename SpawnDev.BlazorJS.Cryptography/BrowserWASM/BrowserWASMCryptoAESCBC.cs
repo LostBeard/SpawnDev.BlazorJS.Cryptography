@@ -22,7 +22,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// </summary>
         public async Task<Uint8Array> Encrypt(PortableAESCBCKey key, Uint8Array plainBytes, Uint8Array iv, bool prependIV = false, AESCBCPadding padding = AESCBCPadding.PKCS7)
         {
-            if (key is not BrowserWASMAESCBCKey jsKey) throw new NotImplementedException(); 
+            if (key is not BrowserWASMAESCBCKey jsKey) throw new NotImplementedException();
             if (padding == AESCBCPadding.None)
             {
                 if (plainBytes.Length % AES_CBC_BLOCK_SIZE != 0)

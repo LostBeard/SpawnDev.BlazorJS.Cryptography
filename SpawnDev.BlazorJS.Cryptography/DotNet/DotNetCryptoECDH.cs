@@ -1,6 +1,5 @@
 ﻿
 using SpawnDev.BlazorJS.Cryptography.DotNet;
-using SpawnDev.BlazorJS.JSObjects;
 using System.Security.Cryptography;
 
 namespace SpawnDev.BlazorJS.Cryptography

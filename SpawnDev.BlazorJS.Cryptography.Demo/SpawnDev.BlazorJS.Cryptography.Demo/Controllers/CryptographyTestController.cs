@@ -14,7 +14,7 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         public CryptographyTestController(DotNetCrypto dotNetCrypto)
         {
             DotNetCrypto = dotNetCrypto;
-            
+
         }
         static bool BeenInit = false;
         static PortableECDSAKey? ECDSAKey = null;
