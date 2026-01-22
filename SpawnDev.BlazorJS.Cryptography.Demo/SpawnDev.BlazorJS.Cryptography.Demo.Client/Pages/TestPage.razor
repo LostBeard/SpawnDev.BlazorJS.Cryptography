@@ -34,16 +34,16 @@
     private int currentCount = 0;
 
     [Inject]
-    HttpClient HttpClient { get; set; }
+    HttpClient HttpClient { get; set; } = default!;
 
     [Inject]
-    BrowserCrypto BrowserCrypto { get; set; }
+    BrowserCrypto BrowserCrypto { get; set; } = default!;
 
     [Inject]
-    BrowserWASMCrypto BrowserWASMCrypto { get; set; }
+    BrowserWASMCrypto BrowserWASMCrypto { get; set; } = default!;
 
     [Inject]
-    BlazorJSRuntimeAsync JSA { get; set; }
+    BlazorJSRuntimeAsync JSA { get; set; } = default!;
 
     // local ECDSA key for signing
     PortableECDSAKey? ECDSAKey = null;
