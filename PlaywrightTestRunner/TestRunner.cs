@@ -64,10 +64,11 @@ namespace PlaywrightTestRunner
                 throw new FileNotFoundException($".csproj not found in: {projectDirectory}");
             }
 
-            // get the Blazor WASM project's dotnet version from its csproj file
+            // get the project's dotnet version from its csproj file
             dotnetVersion = GetDotnetVersion(projectPath);
-            projectType = GetDotNetProjectType(projectPath);
 
+            // get project type
+            projectType = GetDotNetProjectType(projectPath);
 
             // get wwwroot path
             var publishPath = Path.GetFullPath(Path.Combine(projectDirectory, $"bin/Release/{dotnetVersion}/publish"));
