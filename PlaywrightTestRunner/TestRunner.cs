@@ -1,7 +1,6 @@
 ﻿using Microsoft.Playwright;
 using System.Diagnostics;
 using System.Xml.Linq;
-using static NUnit.Framework.Internal.OSPlatform;
 
 namespace PlaywrightTestRunner
 {
@@ -99,23 +98,7 @@ namespace PlaywrightTestRunner
                 {
                     StartInfo = startInfo,
                 };
-                process.OutputDataReceived += (sender, args) =>
-                {
-                    if (!string.IsNullOrEmpty(args.Data))
-                    {
-                        Console.WriteLine(args.Data);
-                    }
-                };
-                process.ErrorDataReceived += (sender, args) =>
-                {
-                    if (!string.IsNullOrEmpty(args.Data))
-                    {
-                        Console.Error.WriteLine(args.Data);
-                    }
-                };
                 process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
             }
             else
             {
