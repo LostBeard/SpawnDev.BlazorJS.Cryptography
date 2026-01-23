@@ -1,0 +1,259 @@
+﻿using Microsoft.Playwright;
+using System.Diagnostics;
+using System.Xml.Linq;
+using static NUnit.Framework.Internal.OSPlatform;
+
+namespace PlaywrightTestRunner
+{
+    public enum ProjectType
+    {
+        Other,
+        BlazorWasm,
+        BlazorServer,
+        Mvc,
+        RazorPages
+    }
+    [Parallelizable(ParallelScope.Self)]
+    [TestFixture]
+    public class TestRunner : PageTest
+    {
+        // test port
+        string dotnetVersion = "";
+        static ushort _port = 32301;
+        StaticFileServer? staticFileServer;
+        ProjectType projectType = ProjectType.Other;
+        Process? process;
+        protected string BaseUrl = Environment.GetEnvironmentVariable("BASE_URL") ?? $"https://localhost:{_port}/";
+        /// <summary>
+        /// This environment value should be set by the batch file that calls this script
+        /// </summary>
+        protected string TestProjectDirName = Environment.GetEnvironmentVariable("TestProjectDirName") ?? "";
+        /// <summary>
+        /// Unit test page
+        /// </summary>
+        protected string[] UnitTestPages;
+        ///  <inheritdoc/>
+        public override BrowserNewContextOptions ContextOptions()
+        {
+            return new BrowserNewContextOptions
+            {
+                // required to use the included self signed certificate
+                IgnoreHTTPSErrors = true,
+            };
+        }
+        /// <summary>
+        /// Starts serving the Blazor WebAssembly app using dotnet and waits for it to be ready for a max amount of time
+        /// </summary>
+        [OneTimeSetUp]
+        public async Task StartApp()
+        {
+            var unitTestPages = Environment.GetEnvironmentVariable("UnitTestPage") ?? "";
+            UnitTestPages = unitTestPages.Split(',', StringSplitOptions.TrimEntries).Distinct().ToArray();
+
+            // get the directory that contains the project being tested
+            var projectDirectory = Path.GetFullPath($@"../../../../{TestProjectDirName}");
+            if (!Directory.Exists(projectDirectory))
+            {
+                throw new DirectoryNotFoundException(projectDirectory);
+            }
+
+            // find the first *.csproj in the project's directory
+            var projectPath = Directory.GetFiles(projectDirectory, "*.csproj").FirstOrDefault();
+            if (projectPath == null)
+            {
+                throw new FileNotFoundException($".csproj not found in: {projectDirectory}");
+            }
+
+            // get the Blazor WASM project's dotnet version from its csproj file
+            dotnetVersion = GetDotnetVersion(projectPath);
+            projectType = GetDotNetProjectType(projectPath);
+
+
+            // get wwwroot path
+            var publishPath = Path.GetFullPath(Path.Combine(projectDirectory, $"bin/Release/{dotnetVersion}/publish"));
+
+            var wwwRootPath = Path.Combine(publishPath, "wwwroot");
+
+            if (projectType == ProjectType.BlazorWasm)
+            {
+                // create https server for testing using StaticFileServer
+                // uses the included self signed certificate for unit testing: assets/testcert.pfx
+                staticFileServer = new StaticFileServer(wwwRootPath, BaseUrl);
+
+                // start https server to serve the Blazor WASM app
+                staticFileServer.Start();
+            }
+            else if (projectType == ProjectType.BlazorServer)
+            {
+                // start the Blazor Server app using 'dotnet run --urls <BaseUrl>'
+                var startInfo = new ProcessStartInfo("dotnet", $"run --urls {BaseUrl}")
+                {
+                    WorkingDirectory = projectDirectory,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                };
+                process = new Process()
+                {
+                    StartInfo = startInfo,
+                };
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (!string.IsNullOrEmpty(args.Data))
+                    {
+                        Console.WriteLine(args.Data);
+                    }
+                };
+                process.ErrorDataReceived += (sender, args) =>
+                {
+                    if (!string.IsNullOrEmpty(args.Data))
+                    {
+                        Console.Error.WriteLine(args.Data);
+                    }
+                };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+            }
+            else
+            {
+                throw new Exception($"Unsupported project type: {projectType}");
+            }
+
+            // wait for the server to start
+            // use HttpClient to test for the server readiness
+            using var httpClient = new HttpClient() { BaseAddress = new Uri(BaseUrl) };
+            var sw = Stopwatch.StartNew();
+            while (sw.Elapsed < TimeSpan.FromSeconds(30))
+            {
+                try
+                {
+                    using var response = await httpClient.GetAsync(BaseUrl).WaitAsync(TimeSpan.FromSeconds(2));
+                    if (response?.IsSuccessStatusCode == true)
+                    {
+                        break;
+                    }
+                }
+                catch { }
+                await Task.Delay(1000);
+            }
+        }
+
+        /// <summary>
+        /// Shutdown Blazor WASM host process
+        /// </summary>
+        [OneTimeTearDown]
+        public async Task StopApp()
+        {
+            // shutdown the Blazor WASM host
+            if (staticFileServer != null)
+            {
+                await staticFileServer.Stop();
+            }
+            if (process != null)
+            {
+                try
+                {
+                    process.Kill();
+                }
+                catch { }
+                process.Dispose();
+            }
+        }
+        /// <summary>
+        /// Runs all tests in Home.razor > UnitTestsView component one at a time
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        [Test]
+        public async Task RunAllTestsInTable_ShouldSucceed()
+        {
+            foreach (var page in UnitTestPages)
+            {
+                await RunUnitTests(page);
+            }
+        }
+        async Task RunUnitTests(string page)
+        {
+            var testPage = new Uri(new Uri(BaseUrl), page).ToString();
+            await Page.GotoAsync(testPage);
+
+            // get the table
+            var table = Page.Locator("table.unit-test-view");
+
+            // wait for the table to finish rendering
+            await Expect(table).ToHaveClassAsync(new Regex("unit-test-ready"), new() { Timeout = 10000 });
+
+            // get table body
+            var tbody = table.Locator("tbody");
+
+            // get all rows in the target table body
+            var rows = tbody.Locator("tr");
+
+            // iterate the rows
+            int rowCount = await rows.CountAsync();
+            for (int i = 0; i < rowCount; i++)
+            {
+                // get the specific row by index
+                var currentRow = rows.Nth(i);
+
+                // find the button within THIS specific row
+                var runButton = currentRow.GetByRole(AriaRole.Button, new() { Name = "Run" });
+
+                // click the button to start the process for this row
+                await runButton.ClickAsync();
+
+                // assert that the row eventually gets the class 'test-state-done'
+                await Expect(currentRow).ToHaveClassAsync(new Regex("test-state-done"), new() { Timeout = 15000 });
+
+                // get test type name
+                var typeName = await currentRow.Locator(".test-type-name").TextContentAsync();
+
+                // get test method name
+                var methodName = await currentRow.Locator(".test-method-name").TextContentAsync();
+
+                // current state text
+                var stateMessage = await currentRow.Locator(".test-state").TextContentAsync();
+
+                //  check for error  class
+                var wasError = await currentRow.EvaluateAsync<bool>("el => el.classList.contains('test-error')");
+                if (wasError)
+                {
+                    throw new Exception($"Failed - {typeName}.{methodName}\nTest-error: {stateMessage}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the dotnet version from the csproj file
+        /// </summary>
+        /// <param name="projectPath">Path to the csproj file</param>
+        /// <returns>The dotnet version</returns>
+        private string GetDotnetVersion(string projectPath)
+        {
+            var xml = XDocument.Load(projectPath);
+            var targetFramework = xml.Descendants("TargetFramework").FirstOrDefault();
+            if (targetFramework == null)
+            {
+                throw new Exception("Could not find TargetFramework in csproj file");
+            }
+            return targetFramework.Value;
+        }
+
+        private ProjectType GetDotNetProjectType(string projectPath)
+        {
+            var xml = XDocument.Load(projectPath);
+            var sdkAttribute = xml.Root?.Attribute("Sdk")?.Value ?? "";
+            switch (sdkAttribute)
+            {
+                case "Microsoft.NET.Sdk.BlazorWebAssembly":
+                    return ProjectType.BlazorWasm;
+                case "Microsoft.NET.Sdk.Web":
+                    return ProjectType.BlazorServer;
+                default:
+                    return ProjectType.Other;
+            }
+        }
+    }
+}
