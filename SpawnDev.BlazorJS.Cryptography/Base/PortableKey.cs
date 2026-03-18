@@ -34,13 +34,14 @@
             if (IsDisposed) return;
             IsDisposed = true;
             GC.SuppressFinalize(this);
-            Dispose(false);
+            Dispose(true);
         }
         /// <summary>
         /// Dispose instance resources
         /// </summary>
         public virtual ValueTask DisposeAsync()
         {
+            Dispose();
             return ValueTask.CompletedTask;
         }
         /// <summary>

@@ -56,7 +56,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         public override async Task<PortableAESGCMKey> GenerateAESGCMKey(byte[] secret, byte[] salt, int iterations = 25000, string hashName = HashName.SHA256, int keySizeBytes = 32, int tagSizeBytes = 16, int nonceSizeBytes = 12, bool extractable = true)
         {
             var keyUsages = new string[] { "encrypt", "decrypt" };
-            var pbkKey = await SubtleCrypto!.ImportKey("raw", secret, "PBKDF2", false, new string[] { "deriveKey" });
+            using var pbkKey = await SubtleCrypto!.ImportKey("raw", secret, "PBKDF2", false, new string[] { "deriveKey" });
             var key = await SubtleCrypto!.DeriveKey(
                 new Pbkdf2Params
                 {
@@ -131,7 +131,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             var cipherDataAndTag = new byte[cipherDataAndTagSize];
             Buffer.BlockCopy(encryptedData, 8 + nonceSize, cipherDataAndTag, 0, cipherDataAndTagSize);
             // decrypt
-            var ret = await SubtleCrypto!.Decrypt(new AesGcmParams { Iv = nonce, TagLength = tagSize * 8 }, jsKey!.Key, cipherDataAndTag);
+            using var ret = await SubtleCrypto!.Decrypt(new AesGcmParams { Iv = nonce, TagLength = tagSize * 8 }, jsKey!.Key, cipherDataAndTag);
             return ret.ReadBytes();
         }
     }

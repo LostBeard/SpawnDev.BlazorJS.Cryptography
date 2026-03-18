@@ -6,6 +6,7 @@
 @using SpawnDev.Blazor.UnitTesting
 @using System.Reflection
 @using System.Text
+@using System.Net.Http.Json
 @using System.Security.Cryptography
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
@@ -41,6 +42,9 @@
 
     [Inject]
     BlazorJSRuntime JS { get; set; } = default!;
+
+    [Inject]
+    HttpClient Http { get; set; } = default!;
 
     List<Assembly>? Assemblies = new List<Assembly>();
     List<Type>? Types = new List<Type>();
@@ -403,6 +407,171 @@
         {
             throw new Exception("Failed Encrypt test");
         }
+    }
+
+    // ==================== Cross-Platform Tests (Browser ↔ Server/.NET) ====================
+    // These tests exercise DotNetCrypto on the server via API endpoints to verify
+    // that keys, signatures, and encrypted data are portable across platforms.
+
+    [TestMethod]
+    public async Task CrossPlatform_SHA256_BrowserVsServer()
+    {
+        var hash = await BrowserWASMCrypto.Digest("SHA-256", TestMessageBytes);
+        var serverHash = await PostAsByteArrayAsync("api/CryptographyTest/Digest",
+            new { HashName = "SHA-256", Data = TestMessageBytes });
+        if (!hash.SequenceEqual(serverHash))
+            throw new Exception("SHA-256 hash mismatch between Browser and Server");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_SHA384_BrowserVsServer()
+    {
+        var hash = await BrowserWASMCrypto.Digest("SHA-384", TestMessageBytes);
+        var serverHash = await PostAsByteArrayAsync("api/CryptographyTest/Digest",
+            new { HashName = "SHA-384", Data = TestMessageBytes });
+        if (!hash.SequenceEqual(serverHash))
+            throw new Exception("SHA-384 hash mismatch between Browser and Server");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_SHA512_BrowserVsServer()
+    {
+        var hash = await BrowserWASMCrypto.Digest("SHA-512", TestMessageBytes);
+        var serverHash = await PostAsByteArrayAsync("api/CryptographyTest/Digest",
+            new { HashName = "SHA-512", Data = TestMessageBytes });
+        if (!hash.SequenceEqual(serverHash))
+            throw new Exception("SHA-512 hash mismatch between Browser and Server");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_ECDSA_BrowserSignServerVerify()
+    {
+        // Browser generates key and signs
+        using var ecdsaKey = await BrowserWASMCrypto.GenerateECDSAKey("P-521");
+        var publicKeyBytes = await BrowserWASMCrypto.ExportPublicKeySpki(ecdsaKey);
+        var signature = await BrowserWASMCrypto.Sign(ecdsaKey, TestMessageBytes, "SHA-512");
+
+        // Server verifies the browser's signature using DotNetCrypto
+        var verified = await PostAndReadAsync<bool>("api/CryptographyTest/VerifySignature",
+            new { Data = TestMessageBytes, Signature = signature, PublicKeySpki = publicKeyBytes });
+        if (!verified)
+            throw new Exception("Server (DotNetCrypto) failed to verify Browser signature — cross-platform ECDSA broken");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_ECDSA_ServerSignBrowserVerify()
+    {
+        // Server signs data with DotNetCrypto
+        var result = await PostAndReadAsync<CrossPlatformSignResult>("api/CryptographyTest/SignData", TestMessageBytes);
+
+        // Browser verifies the server's signature
+        using var serverPubKey = await BrowserWASMCrypto.ImportECDSAKey(result.PublicKeySpki, "P-521");
+        var verified = await BrowserWASMCrypto.Verify(serverPubKey, TestMessageBytes, result.Signature, "SHA-512");
+        if (!verified)
+            throw new Exception("Browser (BrowserWASMCrypto) failed to verify Server signature — cross-platform ECDSA broken");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_ECDH_SharedSecret()
+    {
+        // Browser generates ECDH key
+        using var browserEcdh = await BrowserWASMCrypto.GenerateECDHKey("P-521");
+        var browserPubKeyBytes = await BrowserWASMCrypto.ExportPublicKeySpki(browserEcdh);
+
+        // Server returns its ECDH public key
+        var serverPubKeyBytes = await Http.GetFromJsonAsync<byte[]>("api/CryptographyTest/ecdh");
+
+        // Browser derives shared secret
+        using var serverPubKey = await BrowserWASMCrypto.ImportECDHKey(serverPubKeyBytes, "P-521");
+        var browserSecret = await BrowserWASMCrypto.DeriveBits(browserEcdh, serverPubKey);
+
+        // Server derives shared secret from browser's public key
+        var serverSecret = await PostAsByteArrayAsync("api/CryptographyTest/GetSharedSecret",
+            new { SenderECDHPublicKeyB64 = Convert.ToBase64String(browserPubKeyBytes) });
+
+        if (!browserSecret.SequenceEqual(serverSecret))
+            throw new Exception("ECDH shared secret mismatch between Browser and Server");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_AESGCM_BrowserEncryptServerDecrypt()
+    {
+        var secret = BrowserWASMCrypto.RandomBytes(64);
+        using var key = await BrowserWASMCrypto.GenerateAESGCMKey(secret);
+        var encrypted = await BrowserWASMCrypto.Encrypt(key, TestMessageBytes);
+
+        // Server decrypts using DotNetCrypto with same secret
+        var decrypted = await PostAsByteArrayAsync("api/CryptographyTest/AesGcmDecrypt",
+            new { Secret = secret, Data = encrypted });
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+            throw new Exception("Server failed to decrypt Browser AES-GCM ciphertext");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_AESGCM_ServerEncryptBrowserDecrypt()
+    {
+        var secret = BrowserWASMCrypto.RandomBytes(64);
+
+        // Server encrypts using DotNetCrypto
+        var encrypted = await PostAsByteArrayAsync("api/CryptographyTest/AesGcmEncrypt",
+            new { Secret = secret, Data = TestMessageBytes });
+
+        // Browser decrypts
+        using var key = await BrowserWASMCrypto.GenerateAESGCMKey(secret);
+        var decrypted = await BrowserWASMCrypto.Decrypt(key, encrypted);
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+            throw new Exception("Browser failed to decrypt Server AES-GCM ciphertext");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_AESCBC_BrowserEncryptServerDecrypt()
+    {
+        using var key = await BrowserWASMCrypto.GenerateAESCBCKey(256);
+        var rawKey = await BrowserWASMCrypto.ExportAESCBCKey(key);
+        var encrypted = await BrowserWASMCrypto.Encrypt(key, TestMessageBytes);
+
+        // Server decrypts using DotNetCrypto with same raw key
+        var decrypted = await PostAsByteArrayAsync("api/CryptographyTest/AesCbcDecrypt",
+            new { RawKey = rawKey, Data = encrypted });
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+            throw new Exception("Server failed to decrypt Browser AES-CBC ciphertext");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_AESCBC_ServerEncryptBrowserDecrypt()
+    {
+        using var key = await BrowserWASMCrypto.GenerateAESCBCKey(256);
+        var rawKey = await BrowserWASMCrypto.ExportAESCBCKey(key);
+
+        // Server encrypts using DotNetCrypto
+        var encrypted = await PostAsByteArrayAsync("api/CryptographyTest/AesCbcEncrypt",
+            new { RawKey = rawKey, Data = TestMessageBytes });
+
+        // Browser decrypts
+        var decrypted = await BrowserWASMCrypto.Decrypt(key, encrypted);
+        if (!TestMessageBytes.SequenceEqual(decrypted))
+            throw new Exception("Browser failed to decrypt Server AES-CBC ciphertext");
+    }
+
+    // ==================== Helpers for HTTP calls ====================
+    class CrossPlatformSignResult
+    {
+        public byte[] Signature { get; set; } = System.Array.Empty<byte>();
+        public byte[] PublicKeySpki { get; set; } = System.Array.Empty<byte>();
+    }
+
+    async Task<byte[]> PostAsByteArrayAsync(string url, object content)
+    {
+        var response = await Http.PostAsJsonAsync(url, content);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<byte[]>() ?? System.Array.Empty<byte>();
+    }
+
+    async Task<T> PostAndReadAsync<T>(string url, object content)
+    {
+        var response = await Http.PostAsJsonAsync(url, content);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<T>())!;
     }
 
     // DecryptInPlace data

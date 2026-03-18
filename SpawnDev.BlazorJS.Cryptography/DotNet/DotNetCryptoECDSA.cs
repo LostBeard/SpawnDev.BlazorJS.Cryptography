@@ -84,7 +84,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         {
             if (key is not DotNetECDSAKey keyNet) throw new NotImplementedException();
             var hashAlgorithm = HashNameToHashAlgorithmName(hashName);
-            var verified = keyNet!.Key.VerifyData(data, signature, hashAlgorithm);
+            var verified = keyNet!.Key.VerifyData(data, signature, hashAlgorithm, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
             return Task.FromResult(verified);
         }
         /// <summary>
@@ -99,7 +99,7 @@ namespace SpawnDev.BlazorJS.Cryptography
         {
             if (key is not DotNetECDSAKey keyNet) throw new NotImplementedException();
             var hashAlgorithm = HashNameToHashAlgorithmName(hashName);
-            var signature = keyNet!.Key.SignData(data, hashAlgorithm);
+            var signature = keyNet!.Key.SignData(data, hashAlgorithm, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
             return Task.FromResult(signature);
         }
     }

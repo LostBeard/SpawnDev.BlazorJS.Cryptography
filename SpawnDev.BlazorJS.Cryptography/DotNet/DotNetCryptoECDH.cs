@@ -107,7 +107,7 @@ namespace SpawnDev.BlazorJS.Cryptography
             var retBitLength = ret.Length * 8;
             if (retBitLength < bitLength) throw new Exception($"Requested {bitLength} exceeds the max bitLength {retBitLength}");
             var requestedByteLength = (int)Math.Ceiling(bitLength / 8d);
-            if (requestedByteLength == retBitLength) return Task.FromResult(ret);
+            if (requestedByteLength == ret.Length) return Task.FromResult(ret);
             return Task.FromResult(ret[..requestedByteLength]);
         }
         /// <summary>
