@@ -1,5 +1,7 @@
 ﻿@page "/WasmUnitTests"
 @page "/tests"
+@using SpawnDev.BlazorJS
+@using SpawnDev.BlazorJS.Cryptography
 @using SpawnDev.BlazorJS.Cryptography.Browser
 @using SpawnDev.BlazorJS.JSObjects
 @using SpawnDev.BlazorJS.RemoteJSRuntime
@@ -237,6 +239,116 @@
     }
 
 
+    // ************************************ Ed25519 ************************************
+    // Ed25519 is EdDSA — no namedCurve, no hashName (fixed SHA-512 internally).
+    // Safari produces non-deterministic signatures — verify works cross-platform regardless.
+    [TestMethod]
+    public async Task Ed25519BrowserWASMGenerateExportBrowserImportTest()
+    {
+        await _Ed25519GenerateExportImportTest(BrowserWASMCrypto, BrowserCrypto);
+    }
+    [TestMethod]
+    public async Task Ed25519BrowserGenerateExportBrowserWASMImportTest()
+    {
+        await _Ed25519GenerateExportImportTest(BrowserCrypto, BrowserWASMCrypto);
+    }
+    [TestMethod]
+    public async Task Ed25519BrowserWASMSignBrowserVerify()
+    {
+        await _Ed25519SignAndVerify(BrowserWASMCrypto, BrowserCrypto);
+    }
+    [TestMethod]
+    public async Task Ed25519BrowserSignBrowserWASMVerify()
+    {
+        await _Ed25519SignAndVerify(BrowserCrypto, BrowserWASMCrypto);
+    }
+    [TestMethod]
+    public async Task Ed25519BrowserWASMSignAndVerify()
+    {
+        await _Ed25519SignAndVerify(BrowserWASMCrypto, BrowserWASMCrypto);
+    }
+    [TestMethod]
+    public async Task Ed25519BrowserSignAndVerify()
+    {
+        await _Ed25519SignAndVerify(BrowserCrypto, BrowserCrypto);
+    }
+    [TestMethod]
+    public async Task Ed25519WrongMessageRejects()
+    {
+        using var key = await BrowserWASMCrypto.GenerateEd25519Key();
+        var signature = await BrowserWASMCrypto.Sign(key, TestMessageBytes);
+        var wrongMessage = System.Text.Encoding.UTF8.GetBytes("Wrong message");
+        var verified = await BrowserWASMCrypto.Verify(key, wrongMessage, signature);
+        if (verified) throw new Exception("Ed25519 should reject wrong message");
+    }
+    [TestMethod]
+    public async Task Ed25519TamperedSignatureRejects()
+    {
+        using var key = await BrowserWASMCrypto.GenerateEd25519Key();
+        var signature = await BrowserWASMCrypto.Sign(key, TestMessageBytes);
+        signature[0] ^= 0xFF;
+        var verified = await BrowserWASMCrypto.Verify(key, TestMessageBytes, signature);
+        if (verified) throw new Exception("Ed25519 should reject tampered signature");
+    }
+    [TestMethod]
+    public async Task Ed25519SignatureIs64Bytes()
+    {
+        using var key = await BrowserWASMCrypto.GenerateEd25519Key();
+        var signature = await BrowserWASMCrypto.Sign(key, TestMessageBytes);
+        if (signature.Length != 64) throw new Exception($"Ed25519 signature should be 64 bytes, got {signature.Length}");
+    }
+    [TestMethod]
+    public async Task Ed25519SpkiIs44BytesPkcs8Is48Bytes()
+    {
+        using var key = await BrowserWASMCrypto.GenerateEd25519Key();
+        var spki = await BrowserWASMCrypto.ExportPublicKeySpki(key);
+        var pkcs8 = await BrowserWASMCrypto.ExportPrivateKeyPkcs8(key);
+        if (spki.Length != 44) throw new Exception($"Ed25519 SPKI should be 44 bytes, got {spki.Length}");
+        if (pkcs8.Length != 48) throw new Exception($"Ed25519 PKCS8 should be 48 bytes, got {pkcs8.Length}");
+    }
+    public async Task _Ed25519SignAndVerify(IPortableCrypto signerCrypto, IPortableCrypto verifierCrypto)
+    {
+        // generate Ed25519 key (no curve parameter)
+        using var ed25519Key = await signerCrypto.GenerateEd25519Key();
+
+        // export public key for verifier
+        var publicKeyBytes = await signerCrypto.ExportPublicKeySpki(ed25519Key);
+
+        // sign test message (no hash parameter — Ed25519 uses fixed SHA-512 internally)
+        var signature = await signerCrypto.Sign(ed25519Key, TestMessageBytes);
+
+        // import public key on verifier
+        using var publicKeyImported = await verifierCrypto.ImportEd25519Key(publicKeyBytes);
+
+        // verify signature
+        var verified = await verifierCrypto.Verify(publicKeyImported, TestMessageBytes, signature);
+        if (!verified)
+        {
+            throw new Exception("Ed25519 signature verification failed");
+        }
+    }
+    public async Task _Ed25519GenerateExportImportTest(IPortableCrypto keyGeneratorExporter, IPortableCrypto keyImporter)
+    {
+        // generate Ed25519 key
+        using var ed25519Key = await keyGeneratorExporter.GenerateEd25519Key();
+
+        // export public and private keys
+        var publicKeyBytes = await keyGeneratorExporter.ExportPublicKeySpki(ed25519Key);
+        var privateKeyBytes = await keyGeneratorExporter.ExportPrivateKeyPkcs8(ed25519Key);
+
+        // import on the other backend
+        using var ed25519KeyImported = await keyImporter.ImportEd25519Key(publicKeyBytes, privateKeyBytes);
+
+        // test by signing with imported key and verifying
+        var signature = await keyImporter.Sign(ed25519KeyImported, TestMessageBytes);
+        var verified = await keyImporter.Verify(ed25519KeyImported, TestMessageBytes, signature);
+        if (!verified)
+        {
+            throw new Exception("Ed25519 export/import roundtrip signature verification failed");
+        }
+    }
+
+    // ************************************ AES ************************************
     [TestMethod]
     public async Task AESCBCBrowserTest()
     {
@@ -551,6 +663,36 @@
         var decrypted = await BrowserWASMCrypto.Decrypt(key, encrypted);
         if (!TestMessageBytes.SequenceEqual(decrypted))
             throw new Exception("Browser failed to decrypt Server AES-CBC ciphertext");
+    }
+
+    // ==================== Cross-Platform Ed25519 (DotNetCrypto on server) ====================
+
+    [TestMethod]
+    public async Task CrossPlatform_Ed25519_BrowserSignServerVerify()
+    {
+        // Browser generates key and signs
+        using var ed25519Key = await BrowserWASMCrypto.GenerateEd25519Key();
+        var publicKeyBytes = await BrowserWASMCrypto.ExportPublicKeySpki(ed25519Key);
+        var signature = await BrowserWASMCrypto.Sign(ed25519Key, TestMessageBytes);
+
+        // Server verifies the browser's signature using DotNetCrypto
+        var verified = await PostAndReadAsync<bool>("api/CryptographyTest/Ed25519Verify",
+            new { Data = TestMessageBytes, Signature = signature, PublicKeySpki = publicKeyBytes });
+        if (!verified)
+            throw new Exception("Server (DotNetCrypto) failed to verify Browser Ed25519 signature");
+    }
+
+    [TestMethod]
+    public async Task CrossPlatform_Ed25519_ServerSignBrowserVerify()
+    {
+        // Server signs data with DotNetCrypto Ed25519
+        var result = await PostAndReadAsync<CrossPlatformSignResult>("api/CryptographyTest/Ed25519Sign", TestMessageBytes);
+
+        // Browser verifies the server's signature
+        using var serverPubKey = await BrowserWASMCrypto.ImportEd25519Key(result.PublicKeySpki);
+        var verified = await BrowserWASMCrypto.Verify(serverPubKey, TestMessageBytes, result.Signature);
+        if (!verified)
+            throw new Exception("Browser (BrowserWASMCrypto) failed to verify Server Ed25519 signature");
     }
 
     // ==================== Helpers for HTTP calls ====================

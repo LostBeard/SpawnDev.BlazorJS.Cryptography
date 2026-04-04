@@ -218,6 +218,55 @@ namespace SpawnDev.BlazorJS.Cryptography
         /// <param name="hashName"></param>
         /// <returns></returns>
         public abstract Task<bool> Verify(PortableECDSAKey key, byte[] data, byte[] signature, string hashName = "SHA-512");
+        // Ed25519
+        /// <summary>
+        /// Generate an Ed25519 key pair
+        /// </summary>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        public abstract Task<PortableEd25519Key> GenerateEd25519Key(bool extractable = true);
+        /// <summary>
+        /// Import an Ed25519 public key
+        /// </summary>
+        /// <param name="publicKeySpkiData"></param>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        public abstract Task<PortableEd25519Key> ImportEd25519Key(byte[] publicKeySpkiData, bool extractable = true);
+        /// <summary>
+        /// Import an Ed25519 public and private key
+        /// </summary>
+        /// <param name="publicKeySpkiData"></param>
+        /// <param name="privateKeyPkcs8Data"></param>
+        /// <param name="extractable"></param>
+        /// <returns></returns>
+        public abstract Task<PortableEd25519Key> ImportEd25519Key(byte[] publicKeySpkiData, byte[] privateKeyPkcs8Data, bool extractable = true);
+        /// <summary>
+        /// Export an Ed25519 public key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public abstract Task<byte[]> ExportPublicKeySpki(PortableEd25519Key key);
+        /// <summary>
+        /// Export an Ed25519 private key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public abstract Task<byte[]> ExportPrivateKeyPkcs8(PortableEd25519Key key);
+        /// <summary>
+        /// Sign data using an Ed25519 key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public abstract Task<byte[]> Sign(PortableEd25519Key key, byte[] data);
+        /// <summary>
+        /// Verify an Ed25519 signature
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="data"></param>
+        /// <param name="signature"></param>
+        /// <returns></returns>
+        public abstract Task<bool> Verify(PortableEd25519Key key, byte[] data, byte[] signature);
         // Random
         /// <summary>
         /// Generate a random byte array
@@ -262,6 +311,10 @@ namespace SpawnDev.BlazorJS.Cryptography
             /// AES-CBC
             /// </summary>
             public const string AESCBC = "AES-CBC";
+            /// <summary>
+            /// Ed25519 (EdDSA)
+            /// </summary>
+            public const string Ed25519 = "Ed25519";
         }
         /// <summary>
         /// EC named curves

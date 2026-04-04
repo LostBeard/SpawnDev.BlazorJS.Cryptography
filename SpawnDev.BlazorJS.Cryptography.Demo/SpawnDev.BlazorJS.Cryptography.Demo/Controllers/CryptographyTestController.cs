@@ -19,12 +19,14 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         static bool BeenInit = false;
         static PortableECDSAKey? ECDSAKey = null;
         static PortableECDHKey? ECDHKey = null;
+        static PortableEd25519Key? Ed25519Key = null;
         async Task InitAsync()
         {
             if (BeenInit) return;
             BeenInit = true;
             ECDSAKey = await DotNetCrypto.GenerateECDSAKey();
             ECDHKey = await DotNetCrypto.GenerateECDHKey();
+            Ed25519Key = await DotNetCrypto.GenerateEd25519Key();
         }
 
         [HttpGet("ecdsa")]
@@ -147,6 +149,31 @@ namespace SpawnDev.BlazorJS.Cryptography.Demo.Controllers
         {
             using var key = await DotNetCrypto.ImportAESCBCKey(args.RawKey);
             return await DotNetCrypto.Decrypt(key, args.Data);
+        }
+
+        // ==================== Ed25519 Cross-Platform Endpoints ====================
+
+        /// <summary>
+        /// Server signs data with DotNetCrypto Ed25519 and returns the signature + public key
+        /// </summary>
+        [HttpPost("Ed25519Sign")]
+        public async Task<CrossPlatformSignResult> Ed25519Sign([FromBody] byte[] data)
+        {
+            await InitAsync();
+            var signature = await DotNetCrypto.Sign(Ed25519Key!, data);
+            var publicKey = await DotNetCrypto.ExportPublicKeySpki(Ed25519Key!);
+            return new CrossPlatformSignResult { Signature = signature, PublicKeySpki = publicKey };
+        }
+
+        /// <summary>
+        /// Server verifies an Ed25519 signature created by the browser
+        /// </summary>
+        [HttpPost("Ed25519Verify")]
+        public async Task<bool> Ed25519Verify([FromBody] CrossPlatformVerifyArgs args)
+        {
+            await InitAsync();
+            using var browserKey = await DotNetCrypto.ImportEd25519Key(args.PublicKeySpki);
+            return await DotNetCrypto.Verify(browserKey, args.Data, args.Signature);
         }
     }
 

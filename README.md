@@ -9,8 +9,10 @@ Most of Microsoft's System.Security.Cryptography library is marked `[Unsupported
 
 ### Features
 - AES-GCM - symmetric encryption and decryption
+- AES-CBC - symmetric encryption and decryption
 - ECDH - shared secret generation (enables asymmetric encryption)
 - ECDSA - data signing and verification
+- Ed25519 - data signing and verification (EdDSA, RFC 8032)
 - SHA - data hashing
 
 ### PortableCrypto Classes
@@ -187,6 +189,30 @@ if (!sharedSecretB.SequenceEqual(sharedSecretD))
 
 #### `Task<byte[]> Sign(PortableECDSAKey key, byte[] data, string hashName = HashName.SHA512)`
 - Sign data using an ECDSA key
+
+### Ed25519 - Data Signing (EdDSA, RFC 8032)
+Ed25519 uses a fixed curve (Curve25519) and fixed hash (SHA-512). No curve or hash parameters needed. Browser backends use WebCrypto when available (Chrome 137+, Firefox 129+, Safari 17+), with automatic fallback to a pure managed C# implementation on older browsers.
+
+#### `Task<PortableEd25519Key> GenerateEd25519Key(bool extractable = true)`
+- Generate a new Ed25519 key pair
+
+#### `Task<byte[]> ExportPublicKeySpki(PortableEd25519Key key)`
+- Export the Ed25519 public key in SPKI format
+
+#### `Task<byte[]> ExportPrivateKeyPkcs8(PortableEd25519Key key)`
+- Export the Ed25519 private key in PKCS8 format
+
+#### `Task<PortableEd25519Key> ImportEd25519Key(byte[] publicKeySpkiData, bool extractable = true)`
+- Import an Ed25519 public key
+
+#### `Task<PortableEd25519Key> ImportEd25519Key(byte[] publicKeySpkiData, byte[] privateKeyPkcs8Data, bool extractable = true)`
+- Import an Ed25519 public and private key
+
+#### `Task<byte[]> Sign(PortableEd25519Key key, byte[] data)`
+- Sign data using an Ed25519 key
+
+#### `Task<bool> Verify(PortableEd25519Key key, byte[] data, byte[] signature)`
+- Verify an Ed25519 signature
 
 ### AES-GCM - Data Encryption
 
