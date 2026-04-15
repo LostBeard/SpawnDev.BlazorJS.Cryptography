@@ -7,6 +7,25 @@ namespace SpawnDev.BlazorJS.Cryptography
     /// </summary>
     public abstract partial class PortableCrypto : IPortableCrypto
     {
+        /// <summary>
+        /// Creates a platform-appropriate implementation of the PortableCrypto class for cryptographic operations.
+        /// </summary>
+        /// <remarks>This method automatically selects the correct cryptography implementation based on
+        /// the runtime environment. Use this method to ensure compatibility across Blazor WebAssembly and other .NET
+        /// platforms.</remarks>
+        /// <returns>A PortableCrypto instance suitable for the current platform. Returns a BrowserWASMCrypto instance when
+        /// running in a browser environment; otherwise, returns a DotNetCrypto instance.</returns>
+        public static PortableCrypto CreateCrypto()
+        {
+            if (OperatingSystem.IsBrowser())
+            {
+                return new BrowserWASMCrypto(BlazorJSRuntime.JS);
+            }
+            else
+            {
+                return new DotNetCrypto();
+            }
+        }
         // Digest
         /// <summary>
         /// Hash data using the specified hash algorithm
