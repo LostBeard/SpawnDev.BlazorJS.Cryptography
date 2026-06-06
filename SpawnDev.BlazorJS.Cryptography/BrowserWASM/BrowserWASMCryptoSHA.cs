@@ -1,4 +1,6 @@
-﻿namespace SpawnDev.BlazorJS.Cryptography
+﻿using SpawnDev.BlazorJS.JSObjects;
+
+namespace SpawnDev.BlazorJS.Cryptography
 {
     public partial class BrowserWASMCrypto
     {
@@ -8,11 +10,43 @@
         /// <param name="hashName"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
         public override async Task<byte[]> Digest(string hashName, byte[] data)
         {
             using var arrayBuffer = await SubtleCrypto!.Digest(hashName, data);
             return arrayBuffer.ReadBytes();
+        }
+        /// <summary>
+        /// Hash the specified data using the specified hash algorithm
+        /// </summary>
+        /// <param name="hashName"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public async Task<ArrayBuffer> Digest(string hashName, TypedArray data)
+        {
+            var arrayBuffer = await SubtleCrypto!.Digest(hashName, data);
+            return arrayBuffer;
+        }
+        /// <summary>
+        /// Hash the specified data using the specified hash algorithm
+        /// </summary>
+        /// <param name="hashName"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public async Task<ArrayBuffer> Digest(string hashName, ArrayBuffer data)
+        {
+            var arrayBuffer = await SubtleCrypto!.Digest(hashName, data);
+            return arrayBuffer;
+        }
+        /// <summary>
+        /// Hash the specified data using the specified hash algorithm
+        /// </summary>
+        /// <param name="hashName"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public async Task<ArrayBuffer> Digest(string hashName, DataView data)
+        {
+            var arrayBuffer = await SubtleCrypto!.Digest(hashName, data);
+            return arrayBuffer;
         }
     }
 }
